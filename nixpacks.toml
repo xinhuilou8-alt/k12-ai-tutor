@@ -5,4 +5,4 @@ nixPkgs = ["nodejs_18"]
 cmds = ["npm install --include=dev"]
 
 [start]
-cmd = "npx ts-node --skip-project --compiler-options '{\"module\":\"commonjs\",\"moduleResolution\":\"node\",\"esModuleInterop\":true,\"strict\":false}' packages/demo-server/src/server.ts"
+cmd = "node start.js"
