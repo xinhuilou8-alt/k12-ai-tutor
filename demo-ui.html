@@ -579,7 +579,7 @@ return `<div class="cd"><div class="tt">📋 作业完成摘要</div>
 }
 
 // ===== API HELPER =====
-const API='http://localhost:3210/api';
+const API=window.location.origin+'/api';
 async function post(url,body){const r=await fetch(API+url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});return r.json();}
 async function get(url){return(await fetch(API+url)).json();}
 function showStatus(msg,ok=true){const d=document.createElement('div');d.className='nt '+(ok?'ns':'nd');d.style.cssText='position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:99;max-width:400px;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,.15)';
