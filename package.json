@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "description": "K12家庭作业AI辅导产品 - 微服务架构",
+  "engines": {
+    "node": ">=18"
+  },
   "workspaces": [
     "packages/*"
   ],
