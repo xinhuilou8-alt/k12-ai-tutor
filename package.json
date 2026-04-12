@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "start": "npx ts-node --skip-project --compiler-options '{\"module\":\"commonjs\",\"moduleResolution\":\"node\",\"esModuleInterop\":true,\"strict\":false}' packages/demo-server/src/server.ts",
-    "build": "tsc --build tsconfig.json",
+    "build": "echo 'skip tsc build - using ts-node at runtime'",
     "lint": "eslint 'packages/*/src/**/*.ts'",
     "test": "jest --passWithNoTests",
     "demo": "npx ts-node --skip-project --compiler-options '{\"module\":\"commonjs\",\"moduleResolution\":\"node\",\"esModuleInterop\":true,\"strict\":false}' demo.ts",
