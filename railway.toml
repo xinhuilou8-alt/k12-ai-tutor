@@ -4,6 +4,5 @@ buildCommand = "npm install"
 
 [deploy]
 startCommand = "npx ts-node --skip-project --compiler-options '{\"module\":\"commonjs\",\"moduleResolution\":\"node\",\"esModuleInterop\":true,\"strict\":false}' packages/demo-server/src/server.ts"
-healthcheckPath = "/api/config/status"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10

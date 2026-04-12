@@ -525,7 +525,7 @@ app.get('/api/feynman/state/:sessionId', (req, res) => {
 
 // ════════════════════════════════════════
 const PORT = process.env.PORT || 3210;
-app.listen(PORT, () => {
+app.listen(Number(PORT), '0.0.0.0', () => {
   console.log(`\n  🎓 K12 AI辅导 Demo Server`);
   console.log(`  ────────────────────────��`);
   console.log(`  🌐 API:  http://localhost:${PORT}/api`);
