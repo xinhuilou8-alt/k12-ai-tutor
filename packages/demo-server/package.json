@@ -1,0 +1,24 @@
+{
+  "name": "@k12-ai/demo-server",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "ts-node --skip-project --compiler-options '{\"module\":\"commonjs\",\"moduleResolution\":\"node\",\"esModuleInterop\":true,\"strict\":false}' src/server.ts"
+  },
+  "dependencies": {
+    "@k12-ai/shared": "*",
+    "@k12-ai/homework-classification": "*",
+    "@k12-ai/oral-recording": "*",
+    "@k12-ai/focus-management": "*",
+    "@k12-ai/parent-coaching": "*",
+    "@k12-ai/habit-tracker": "*",
+    "@k12-ai/school-sync": "*",
+    "@k12-ai/grade-adaptation": "*",
+    "express": "^5.2.1",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/cors": "^2.8.17"
+  }
+}

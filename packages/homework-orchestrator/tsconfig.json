@@ -1,0 +1,23 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "composite": true
+  },
+  "include": ["src/**/*.ts"],
+  "references": [
+    { "path": "../shared" },
+    { "path": "../bloom-engine" },
+    { "path": "../feynman-engine" },
+    { "path": "../metacognition-service" },
+    { "path": "../pbl-steam-service" },
+    { "path": "../homework-classification" },
+    { "path": "../oral-recording" },
+    { "path": "../focus-management" },
+    { "path": "../parent-coaching" },
+    { "path": "../habit-tracker" },
+    { "path": "../school-sync" },
+    { "path": "../grade-adaptation" }
+  ]
+}

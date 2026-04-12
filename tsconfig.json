@@ -1,0 +1,44 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "lib": ["ES2022"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@k12-ai/shared": ["packages/shared/src"],
+      "@k12-ai/*": ["packages/*/src"]
+    }
+  },
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "jest.config.ts"],
+  "references": [
+    { "path": "packages/shared" },
+    { "path": "packages/api-gateway" },
+    { "path": "packages/homework-orchestrator" },
+    { "path": "packages/chinese-engine" },
+    { "path": "packages/math-engine" },
+    { "path": "packages/english-engine" },
+    { "path": "packages/ocr-engine" },
+    { "path": "packages/asr-engine" },
+    { "path": "packages/tts-engine" },
+    { "path": "packages/llm-service" },
+    { "path": "packages/error-book-service" },
+    { "path": "packages/spaced-repetition-service" },
+    { "path": "packages/adaptive-engine" },
+    { "path": "packages/bloom-engine" },
+    { "path": "packages/feynman-engine" },
+    { "path": "packages/metacognition-service" },
+    { "path": "packages/pbl-service" },
+    { "path": "packages/steam-service" },
+    { "path": "packages/learning-profile-service" },
+    { "path": "packages/notification-service" }
+  ],
+  "files": []
+}

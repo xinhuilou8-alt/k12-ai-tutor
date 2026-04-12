@@ -1,0 +1,25 @@
+{
+  "name": "@k12-ai/homework-orchestrator",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@k12-ai/shared": "*",
+    "@k12-ai/bloom-engine": "*",
+    "@k12-ai/feynman-engine": "*",
+    "@k12-ai/metacognition-service": "*",
+    "@k12-ai/pbl-steam-service": "*",
+    "@k12-ai/homework-classification": "*",
+    "@k12-ai/oral-recording": "*",
+    "@k12-ai/focus-management": "*",
+    "@k12-ai/parent-coaching": "*",
+    "@k12-ai/habit-tracker": "*",
+    "@k12-ai/school-sync": "*",
+    "@k12-ai/grade-adaptation": "*"
+  }
+}

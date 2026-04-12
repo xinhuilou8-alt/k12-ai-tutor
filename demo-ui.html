@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K12家庭作业AI辅导 — 全功能演示</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--p:#4F46E5;--pl:#EEF2FF;--s:#10B981;--sl:#D1FAE5;--w:#F59E0B;--wl:#FEF3C7;--d:#EF4444;--dl:#FEE2E2;--g50:#F9FAFB;--g1:#F3F4F6;--g2:#E5E7EB;--g3:#D1D5DB;--g5:#6B7280;--g7:#374151;--g9:#111827;--r:12px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--g50);color:var(--g9);line-height:1.6}
+.app{max-width:480px;margin:0 auto;min-height:100vh;background:#fff;overflow:hidden}
+.hd{background:linear-gradient(135deg,var(--p),#7C3AED);color:#fff;padding:20px;text-align:center}
+.hd h1{font-size:20px;font-weight:700}.hd p{font-size:13px;opacity:.8;margin-top:4px}
+.ui{display:flex;justify-content:center;gap:10px;margin-top:12px;font-size:12px;flex-wrap:wrap}
+.ui span{background:rgba(255,255,255,.2);padding:4px 12px;border-radius:20px}
+.tabs{display:flex;background:#fff;border-bottom:1px solid var(--g2);position:sticky;top:0;z-index:10;overflow-x:auto}
+.tab{flex:none;padding:12px 13px;font-size:12px;color:var(--g5);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:.2s}
+.tab.active{color:var(--p);border-bottom-color:var(--p);font-weight:600}
+.tab:hover{color:var(--p);background:var(--pl)}
+.ct{padding:16px 16px 24px}
+.cd{background:#fff;border:1px solid var(--g2);border-radius:var(--r);padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.tt{font-size:15px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:.2s}
+.bp{background:var(--p);color:#fff}.bp:hover{background:#4338CA}.bs{background:var(--s);color:#fff}
+.bw{background:var(--w);color:#fff}.bd{background:var(--d);color:#fff}
+.bo{background:#fff;color:var(--p);border:1px solid var(--p)}
+.bsm{padding:6px 12px;font-size:12px}.btn:disabled{opacity:.5;cursor:not-allowed}
+.bg{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.msg{max-width:85%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.5;animation:fi .3s}
+.mai{background:var(--pl);color:var(--g7);align-self:flex-start;border-bottom-left-radius:4px}
+.mch{background:var(--sl);color:var(--g7);align-self:flex-end;border-bottom-right-radius:4px}
+.ml{font-size:11px;font-weight:600;margin-bottom:2px}.mai .ml{color:var(--p)}.mch .ml{color:var(--s)}
+.ia{display:flex;gap:8px;margin-top:12px}
+.ia input,.ia textarea{flex:1;padding:10px 14px;border:1px solid var(--g3);border-radius:8px;font-size:14px;outline:none;font-family:inherit}
+.ia input:focus,.ia textarea:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(79,70,229,.1)}
+.pb{height:8px;background:var(--g2);border-radius:4px;overflow:hidden;margin:8px 0}
+.pf{height:100%;border-radius:4px;transition:width .5s}
+.sg{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:8px 0}
+.sg3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}
+.si{text-align:center;padding:12px;background:var(--g50);border-radius:8px}
+.si .v{font-size:24px;font-weight:700}.si .l{font-size:11px;color:var(--g5)}
+.b{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:500}
+.b-s{background:var(--sl);color:#065F46}.b-w{background:var(--wl);color:#92400E}
+.b-d{background:var(--dl);color:#991B1B}.b-p{background:var(--pl);color:#3730A3}
+.nt{padding:12px;border-left:4px solid;border-radius:0 8px 8px 0;margin-bottom:8px;font-size:13px;animation:fi .3s}
+.ni{border-color:var(--p);background:var(--pl)}.nw{border-color:var(--w);background:var(--wl)}
+.ns{border-color:var(--s);background:var(--sl)}.nd{border-color:var(--d);background:var(--dl)}
+.wc{display:flex;gap:4px;margin:8px 0}
+.cb{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border:2px solid;border-radius:8px;font-size:20px;font-weight:600}
+.cc{border-color:var(--s);color:var(--s);background:var(--sl)}.cw{border-color:var(--d);color:var(--d);background:var(--dl)}
+.scg{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.sc{padding:12px;border:1px solid var(--g2);border-radius:8px;cursor:pointer;transition:.2s;text-align:center}
+.sc:hover,.sc.sel{border-color:var(--p);background:var(--pl)}
+.sc .em{font-size:28px;display:block;margin-bottom:4px}.sc .nm{font-size:13px;font-weight:600}
+.sn{font-size:52px;font-weight:800;background:linear-gradient(135deg,var(--w),var(--d));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.gb{display:flex;gap:4px;margin:8px 0;flex-wrap:wrap}
+.gbtn{padding:6px 14px;border-radius:20px;font-size:13px;cursor:pointer;border:1px solid var(--g3);background:#fff;transition:.2s}
+.gbtn.act{background:var(--p);color:#fff;border-color:var(--p)}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th,.tbl td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--g2)}
+.tbl th{font-weight:600;color:var(--g5);font-size:12px}
+.chat{display:flex;flex-direction:column;gap:8px}
+.sub-nav{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:12px}
+.sub-card{flex:none;padding:10px 14px;border:1px solid var(--g2);border-radius:10px;cursor:pointer;transition:.2s;text-align:center;min-width:90px}
+.sub-card:hover,.sub-card.act{border-color:var(--p);background:var(--pl)}
+.sub-card .em{font-size:22px;display:block}.sub-card .nm{font-size:12px;font-weight:600;margin-top:2px}.sub-card .ds{font-size:10px;color:var(--g5)}
+.tr{width:140px;height:140px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;margin:16px auto;font-weight:700}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}.ap{animation:pulse 1s infinite}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hd">
+    <h1>🎓 K12家庭作业AI辅导</h1>
+    <p>孩子做 · AI盯 · 产品催 · 家长看</p>
+    <div class="ui"><span id="gd">👧 小明 · 4年级</span><span>📅 今日 35分钟</span><span id="sd">🔥 连续7天</span></div>
+  </div>
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-t="home">🏠首页</div>
+    <div class="tab" data-t="preview">📚预习</div>
+    <div class="tab" data-t="chinese">📖语文</div>
+    <div class="tab" data-t="math">🔢数学</div>
+    <div class="tab" data-t="english">🌍英语</div>
+    <div class="tab" data-t="manage">📊管理</div>
+    <div class="tab" data-t="profile">📈学情</div>
+    <div class="tab" data-t="parent">👨家长</div>
+  </div>
+  <div class="ct" id="ct"></div>
+</div>
+<script>
+// ===== STATE =====
+const S={tab:'home',sub:{chinese:'dictation',math:'quiz',english:'dialogue',manage:'errors',parent:'notifs'},
+grade:4,streak:7,mStep:0,mRes:[],dPhase:'ready',dStep:0,dRes:[],ePhase:'select',eTurn:0,eScn:null,
+rPhase:'list',rStep:0,fPhase:'ready',fRound:1,fFocus:true,fSec:600,fTid:null,
+omPhase:'ready',omStep:0,omRes:[],hToday:false,pcSit:null,wEval:null,fsSession:null,fsWords:[],feynmanSession:null,
+swPhase:'idle',swDraft:'',swFeedback:'',swIdeas:[],
+errors:[
+{id:'e1',q:'56-28=?',ca:'38',co:'28',tp:'退位错误',su:'数学',kp:'减法退位',rk:'位值与进位',st:'new',sk:0,cause:'粗心'},
+{id:'e2',q:'100-37=?',ca:'73',co:'63',tp:'退位错误',su:'数学',kp:'减法退位',rk:'位值与进位',st:'new',sk:0,cause:'知识缺漏'},
+{id:'e3',q:'"美丽"听写',ca:'美力',co:'美丽',tp:'形近字',su:'语文',kp:'生字词',rk:'偏旁部首',st:'reviewing',sk:1,cause:'审题不清'}],
+ach:[{i:'🔥',n:'连续7天',e:true},{i:'💯',n:'首次满分',e:true},{i:'⚡',n:'10连胜',e:false},{i:'🛡️',n:'征服5错题',e:false},{i:'📖',n:'朗读达人',e:true},{i:'✍️',n:'书写之星',e:false}],
+notifs:[{t:'ns',m:'📩 完成数学作业，正确率80%',tm:'10分钟前'},{t:'ns',m:'📩 完成语文听写，正确率90%',tm:'1小时前'},{t:'nw',m:'⚠️ 英语正确率骤降至60%',tm:'2小时前'},{t:'ni',m:'ℹ️ 超过15分钟未操作',tm:'3小时前'}],
+recs:[{d:'6月10日',tp:'朗读',ti:'课文《春》',sc:78,fl:75,ac:80},{d:'6月12日',tp:'背诵',ti:'《静夜思》',sc:85,fl:82,ac:88},{d:'6月14日',tp:'朗读',ti:'课文《春》',sc:88,fl:86,ac:90}]};
+
+const MP=[{x:'23+45',c:68,d:2,k:'加法'},{x:'56-28',c:28,d:3,k:'减法退位'},{x:'12×4',c:48,d:3,k:'乘法'},{x:'100-37',c:63,d:3,k:'减法退位'},{x:'8+15×2',c:38,d:5,k:'运算顺序'}];
+const DW=[{w:'春天',s:'春天来了，花儿开了。'},{w:'美丽',s:'这朵花真美丽。'},{w:'勇敢',s:'他是一个勇敢的孩子。'},{w:'知识',s:'学习知识让我们变得更聪明。'},{w:'温暖',s:'妈妈的拥抱很温暖。'}];
+const ED=[{r:'ai',t:'Welcome to my shop! What would you like to buy today?'},{r:'ch',t:'I would like to buy some apples, please.',sc:82},{r:'ai',t:'Great choice! How many would you like?'},{r:'ch',t:'I want five apples. How much are they?',sc:78},{r:'ai',t:'Five apples will be 10 yuan. Anything else?'},{r:'ch',t:'No, thank you. Here is the money.',sc:90},{r:'ai',t:'Thank you! Have a nice day!'}];
+const RI=[{tp:'生字',ct:'丽',ans:'美丽的丽',df:null},{tp:'单词',ct:'beautiful',ans:'b-e-a-u-t-i-f-u-l',df:null},{tp:'古诗',ct:'床前明月光',ans:'疑是地上霜',df:null},{tp:'公式',ct:'长方形面积',ans:'长 × 宽',df:null},{tp:'概念',ct:'质数',ans:'只能被1和自身整除的大于1的自然数',df:null}];
+const OMQ=[{x:'12+8',a:20},{x:'25-7',a:18},{x:'6×9',a:54},{x:'36÷4',a:9},{x:'15+27',a:42}];
+const COACH={cant_recite:{sit:'孩子背诵时背不出来',wr:'你怎么又背不出来！都读了多少遍了！',ri:'没关系，我们先一起读三遍，分段来记，不着急。',tips:['将长文拆成2-3句一组','利用挖空法逐步增加遮挡','睡前背一遍、早起复习'],cat:'oral'},reading_mistakes:{sit:'朗读时频繁读错字、跳字',wr:'又读错了！这个字教了多少遍了！',ri:'这个字确实有点难，我们一起看看。用手指着，一个字一个字地读。',tips:['用手指逐字朗读','先听范读再跟读','每次只纠正1-2个错误'],cat:'oral'},dawdling:{sit:'写作业时磨蹭拖延',wr:'你快点写！磨磨蹭蹭的！',ri:'我们把作业分成几个小任务，先完成第一个，10分钟就够了。',tips:['番茄钟：10分钟专注+2分钟休息','大任务拆成小任务打勾','写前先收拾桌面'],cat:'written'},messy_writing:{sit:'书写潦草、字迹不工整',wr:'写的什么鬼！擦掉重写！',ri:'这几个字写得挺好的，如果每个字都能像这样就更棒了。',tips:['先肯定写得好的字','一次只改善一个方面','用描红本建立肌肉记忆'],cat:'written'},too_many_errors:{sit:'作业错误很多',wr:'怎么错这么多！上课有没有听讲？',ri:'没关系，错误说明这些地方还需要多练习。我们一起看看哪些是粗心错的。',tips:['区分粗心错和不会做','先解决不会做的题','关注进步而非绝对正确率'],cat:'written'},refuses_homework:{sit:'抗拒做作业，哭闹发脾气',wr:'不写作业怎么行！别人都在写！',ri:'我知道你现在不想写。我们先休息5分钟，然后从最简单的开始，好不好？',tips:['先接纳孩子的情绪','了解抗拒的真正原因','从最擅长的科目开始'],cat:'oral'}};
+const GC={lower:{lb:'1-2年级(低段)',sty:'趣味互动',ses:20,foc:8,ui:'简洁',on:['✨趣味动画','✏️笔顺引导','🔤拼音朗读','🔢简单口算','📖短时长任务'],off:['逻辑引导','深度错题分析','时间管理','议论文写作']},middle:{lb:'3-4年级(中段)',sty:'引导式',ses:30,foc:12,ui:'标准',on:['📋复述提纲','✍️作文素材','📊错题归纳','📖阅读理解','🗣基础口语','📝课文背诵'],off:['逻辑引导','深度错题分析','时间管理']},upper:{lb:'5-6年级(高段)',sty:'自主式',ses:45,foc:20,ui:'高级',on:['🧠逻辑引导','🔍深度错题分析','⏰时间管理','🗣口语表达','✍️议论文写作','📐复杂习题'],off:[]}};
+function gband(){return S.grade<=2?'lower':S.grade<=4?'middle':'upper';}
+function gcfg(){return GC[gband()];}
+
+// ===== SUB-NAV HELPER =====
+function subNav(tab,items){
+return `<div class="sub-nav">${items.map(it=>`<div class="sub-card${S.sub[tab]===it.id?' act':''}" onclick="S.sub.${tab}='${it.id}';R()"><span class="em">${it.em}</span><div class="nm">${it.nm}</div><div class="ds">${it.ds}</div></div>`).join('')}</div>`;
+}
+
+// ===== TAB 1: HOME =====
+function rHome(){
+const cfg=gcfg();
+const plan=[{ic:'🔄',t:'间隔重复复习',su:'综合',tm:'5分钟',st:'done'},{ic:'✏️',t:'错题订正·减法退位',su:'数学',tm:'8分钟',st:'done'},{ic:'📝',t:'计算题练习',su:'数学',tm:'10分钟',st:'cur'},{ic:'📖',t:'生字词听写',su:'语文',tm:'10分钟',st:'todo'},{ic:'🌍',t:'口语对话练习',su:'英语',tm:'7分钟',st:'todo'},{ic:'🎤',t:'晨读朗读(碎片化)',su:'语文',tm:'5分钟',st:'todo'}];
+return `<div class="cd"><div class="tt">📋 今日学习计划 <span class="b b-p">${cfg.lb}</span></div>
+<div style="font-size:13px;color:var(--g5)">预计40分钟 · ${cfg.sty}模式</div>
+<div class="pb"><div class="pf" style="width:60%;background:var(--s)"></div></div>
+${plan.map(t=>`<div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;background:${t.st==='cur'?'var(--pl)':'var(--g50)'};margin-top:6px">
+<span style="font-size:18px">${t.ic}</span><div style="flex:1"><div style="font-size:13px;font-weight:${t.st==='cur'?600:400}">${t.t}</div>
+<div style="font-size:11px;color:var(--g5)">${t.su} · ${t.tm}</div></div>
+${t.st==='done'?'<span class="b b-s">✓完成</span>':t.st==='cur'?'<span class="b b-p ap">进行中</span>':'<span class="b" style="background:var(--g1);color:var(--g5)">待开始</span>'}</div>`).join('')}</div>
+<div class="cd"><div class="tt">⏰ 碎片化学习提醒</div>
+<div style="display:flex;flex-direction:column;gap:6px;font-size:13px">
+<div style="display:flex;justify-content:space-between;padding:8px;background:var(--wl);border-radius:8px"><span>🌅 晨读 7:00</span><span class="b b-s">✓已完成</span></div>
+<div style="display:flex;justify-content:space-between;padding:8px;background:var(--pl);border-radius:8px"><span>☀️ 午间 12:30</span><span class="b b-w">待完成</span></div>
+<div style="display:flex;justify-content:space-between;padding:8px;background:var(--g1);border-radius:8px"><span>🌙 睡前 21:00</span><span class="b" style="background:var(--g2);color:var(--g5)">未到</span></div></div></div>
+<div class="cd"><div class="tt">💡 元认知提示</div>
+<div class="msg mai"><div class="ml">🤖 AI学习助手</div>开始之前，想一想：你觉得今天要学的内容，哪里会比较难呢？先回忆一下昨天学了什么吧！</div></div>
+<div class="cd"><div class="tt">📝 老师布置的作业 <span class="b b-d">REQ-003</span></div>
+<div style="font-size:13px;color:var(--g5);margin-bottom:8px">管理老师布置的家庭作业，AI智能规划完成顺序</div>
+<div class="bg"><button class="btn bp" onclick="addSampleHomework()">📋 添加示例作业</button>
+<button class="btn bo" onclick="loadHomeworkPlan()">🔄 刷新计划</button></div></div>
+<div id="homeworkResult"></div>
+<div class="cd"><div class="tt">🏆 成就徽章</div><div style="display:flex;gap:12px;flex-wrap:wrap">
+${S.ach.map(a=>`<div style="text-align:center;opacity:${a.e?1:.3}"><div style="font-size:28px">${a.i}</div><div style="font-size:11px;color:var(--g5)">${a.n}</div></div>`).join('')}</div></div>`;
+}
+
+// ===== TAB 2: PREVIEW =====
+function rPreview(){
+return `<div class="cd"><div class="tt">📚 课前预习 · 三步框架</div>
+<div style="font-size:13px;color:var(--g5);margin-bottom:12px">重点速览 → 问题驱动 → 障碍清除</div>
+<div class="scg">${[
+{id:'chinese',em:'📖',nm:'语文预习',desc:'草原(4年级)',mat:{title:'草原',subject:'chinese',grade:4,content:'这次，我看到了草原。那里的天比别处的更可爱，空气是那么清鲜。比喻的手法让草原更加生动，排比的句式增强了表达效果。',unit:'第三单元'}},
+{id:'math',em:'🔢',nm:'数学预习',desc:'三角形面积(5年级)',mat:{title:'三角形的面积',subject:'math',grade:5,content:'三角形的面积公式是：面积 = 底 × 高 ÷ 2。这个公式可以通过将三角形拼成平行四边形来推导。',unit:'第五单元'}},
+{id:'english',em:'🌍',nm:'英语预习',desc:'My Weekend(4年级)',mat:{title:'My Weekend',subject:'english',grade:4,content:'Last weekend, I visited my grandmother. She lives in a beautiful village. We walked together in the garden.',unit:'Unit 5'}},
+].map(s=>`<div class="sc" onclick="doPreview(${JSON.stringify(s.mat).replace(/"/g,'&quot;')})"><span class="em">${s.em}</span><div class="nm">${s.nm}</div><div style="font-size:11px;color:var(--g5)">${s.desc}</div></div>`).join('')}</div></div>
+<div id="previewResult"></div>`;
+}
+
+// ===== TAB 3: CHINESE =====
+function rChinese(){
+const subs=[{id:'dictation',em:'📝',nm:'生字听写',ds:'听写练习'},{id:'fivestep',em:'✏️',nm:'识读写用测',ds:'五步法'},{id:'sandwich',em:'🥪',nm:'AI三明治写作',ds:'写作训练'},{id:'feynman',em:'🧑‍🏫',nm:'费曼教学',ds:'当小老师'}];
+let h=subNav('chinese',subs);
+if(S.sub.chinese==='dictation') h+=rDictation();
+else if(S.sub.chinese==='fivestep') h+=rFiveStep();
+else if(S.sub.chinese==='sandwich') h+=rSandwich();
+else h+=rFeynman();
+return h;
+}
+function rDictation(){
+if(S.dPhase==='ready')return `<div class="cd"><div class="tt">📝 生字词听写</div><div style="font-size:13px;color:var(--g5)">共${DW.length}个词语</div>
+<div style="margin-top:12px;padding:12px;background:var(--pl);border-radius:8px;font-size:13px"><strong>播报流程：</strong>词语→组词→例句→重复词语</div>
+<div class="bg"><button class="btn bp" onclick="S.dPhase='writing';S.dStep=0;S.dRes=[];R();setTimeout(()=>document.getElementById('di')?.focus(),100)">📢 开始听写</button></div></div>`;
+if(S.dPhase==='writing'){const w=DW[S.dStep];
+return `<div class="cd"><div class="tt">📢 听写中</div><div style="font-size:12px;color:var(--g5)">第${S.dStep+1}/${DW.length}个词</div>
+<div class="pb"><div class="pf" style="width:${S.dStep/DW.length*100}%;background:var(--s)"></div></div></div>
+<div class="cd" style="text-align:center;padding:20px"><div style="font-size:14px;color:var(--g5)">🔊 正在播报...</div>
+<div style="font-size:12px;color:var(--g5);margin:8px 0">例句: "${w.s}"</div>
+<div class="ia" style="justify-content:center"><input type="text" id="di" placeholder="写出你听到的词语" style="max-width:200px;text-align:center;font-size:18px" onkeydown="if(event.key==='Enter')subD()">
+<button class="btn bp" onclick="subD()">提交</button></div></div>`;}
+const ok=S.dRes.filter(r=>r.ok).length;
+return `<div class="cd"><div class="tt">📊 听写报告</div><div class="sg">
+<div class="si"><div class="v" style="color:${ok>=3?'var(--s)':'var(--w)'}">${Math.round(ok/DW.length*100)}%</div><div class="l">正确率</div></div>
+<div class="si"><div class="v">${ok}/${DW.length}</div><div class="l">正确/总数</div></div></div>
+${S.dRes.map(r=>`<div style="padding:8px 0;border-bottom:1px solid var(--g1)"><div style="display:flex;justify-content:space-between;align-items:center">
+<span style="font-size:16px;font-weight:600">${r.exp}</span>${r.ok?'<span class="b b-s">✓正确</span>':'<span class="b b-d">✗错误</span>'}</div>
+${!r.ok?`<div class="wc" style="margin-top:6px">${r.exp.split('').map((ch,i)=>{const c=(r.act||'')[i]||'?';return `<div class="cb ${ch===c?'cc':'cw'}">${c}</div>`;}).join('')}
+<span style="align-self:center;margin:0 8px;color:var(--g5)">→</span>${r.exp.split('').map(ch=>`<div class="cb cc">${ch}</div>`).join('')}</div>`:''}</div>`).join('')}</div>
+<div class="bg"><button class="btn bp" onclick="S.dPhase='ready';S.dStep=0;S.dRes=[];R()">再来一组</button></div>`;
+}
+
+function rFiveStep(){
+if(!S.fsSession)return `<div class="cd"><div class="tt">✏️ 识读写用测 · 五步法</div>
+<div style="font-size:13px;color:var(--g5);margin-bottom:12px">识→读→写→用→测，每步有通过标准</div>
+<div class="bg"><button class="btn bp" onclick="startFiveStep()">▶ 开始五步法学习</button></div></div>`;
+const fs=S.fsSession,w=S.fsWords[fs.currentWordIndex];
+if(fs.isComplete)return `<div class="cd"><div class="tt">✅ 五步法学习完成！</div><div id="fsReport">加载报告中...</div></div>`;
+const steps=['识','读','写','用','测'],stepMap=['recognize','read','write','use','test'];
+const si=stepMap.indexOf(fs.currentStep);
+return `<div class="cd"><div class="tt">第${fs.currentWordIndex+1}/${fs.totalWords}个字: <span style="font-size:24px;color:var(--p)">${w.character}</span></div>
+<div style="font-size:12px;color:var(--g5)">拼音: ${w.pinyin} · 含义: ${w.meaning}</div>
+<div class="pb"><div class="pf" style="width:${(si/5)*100}%;background:var(--s)"></div></div>
+<div style="display:flex;gap:4px;margin:8px 0">${steps.map((s,i)=>`<span class="b ${i<si?'b-s':i===si?'b-p':''}" style="${i>si?'background:var(--g1);color:var(--g5)':''}">${i<si?'✓':''}${s}</span>`).join('')}</div></div>
+${fs.currentStep==='recognize'?`<div class="cd"><div class="tt">👁 识 · 认识字形</div><div id="recogResult" class="msg mai"><div class="ml">🤖 AI</div>点击按钮，AI将讲解这个字</div>
+<div class="bg"><button class="btn bp" onclick="doFsRecognize()">🔍 开始识字</button></div></div>`:''}
+${fs.currentStep==='read'?`<div class="cd"><div class="tt">🔊 读 · 朗读正音</div>
+<div class="sg3"><div class="si" style="cursor:pointer" onclick="doFsRead(85,90)"><div class="v" style="color:var(--s)">😊</div><div class="l">好(85分)</div></div>
+<div class="si" style="cursor:pointer" onclick="doFsRead(65,60)"><div class="v" style="color:var(--w)">😐</div><div class="l">一般(65)</div></div>
+<div class="si" style="cursor:pointer" onclick="doFsRead(45,40)"><div class="v" style="color:var(--d)">😰</div><div class="l">重试(45)</div></div></div></div>`:''}
+${fs.currentStep==='write'?`<div class="cd"><div class="tt">✍️ 写 · 书写练习</div>
+<div class="sg"><div class="si" style="cursor:pointer" onclick="doFsWrite(true,85)"><div class="v">✓</div><div class="l">笔顺正确</div></div>
+<div class="si" style="cursor:pointer" onclick="doFsWrite(false,50)"><div class="v">✗</div><div class="l">需描红</div></div></div></div>`:''}
+${fs.currentStep==='use'?`<div class="cd"><div class="tt">💬 用 · 造句应用</div>
+<div class="ia"><input type="text" id="fsSentence" placeholder="用"${w.character}"造句" onkeydown="if(event.key==='Enter')doFsUse()">
+<button class="btn bp" onclick="doFsUse()">提交</button></div><div id="useResult"></div></div>`:''}
+${fs.currentStep==='test'?`<div class="cd"><div class="tt">📝 测 · 综合测试</div>
+<div class="ia"><input type="text" id="fsDictation" placeholder="听写：写出这个字" onkeydown="if(event.key==='Enter')doFsTest()">
+<button class="btn bp" onclick="doFsTest()">提交</button></div><div id="testResult"></div></div>`:''}`;
+}
+
+function rSandwich(){
+const phases={idle:'构思',brainstorm:'头脑风暴',draft:'初稿',feedback:'反馈',final:'定稿'};
+return `<div class="cd"><div class="tt">🥪 AI三明治写作</div>
+<div style="font-size:13px;color:var(--g5);margin-bottom:8px">构思→头脑风暴→初稿→反馈→定稿</div>
+<div style="display:flex;gap:4px;margin:8px 0">${Object.entries(phases).map(([k,v])=>`<span class="b ${S.swPhase===k?'b-p':''}" style="${Object.keys(phases).indexOf(k)<Object.keys(phases).indexOf(S.swPhase)?'background:var(--sl);color:#065F46':''}">${v}</span>`).join('')}</div></div>
+${S.swPhase==='idle'?`<div class="cd"><div class="tt">💡 选择写作主题</div>
+<div class="scg">${[{t:'我的好朋友',g:'记叙文'},{t:'春天来了',g:'写景文'},{t:'一件难忘的事',g:'叙事文'},{t:'我的梦想',g:'想象文'}].map(x=>
+`<div class="sc" onclick="S.swPhase='brainstorm';S.swTopic='${x.t}';S.swIdeas=[];R()"><div class="nm">${x.t}</div><div style="font-size:11px;color:var(--g5)">${x.g}</div></div>`).join('')}</div></div>`:''}
+${S.swPhase==='brainstorm'?`<div class="cd"><div class="tt">🧠 头脑风暴: ${S.swTopic}</div>
+<div style="font-size:13px;color:var(--g5);margin-bottom:8px">写下你想到的关键词和素材</div>
+<div class="ia"><input type="text" id="swIdea" placeholder="输入一个想法..." onkeydown="if(event.key==='Enter'){S.swIdeas.push(this.value);this.value='';R()}">
+<button class="btn bp" onclick="const i=document.getElementById('swIdea');S.swIdeas.push(i.value);i.value='';R()">添加</button></div>
+${S.swIdeas.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">${S.swIdeas.map(x=>`<span class="b b-p">${x}</span>`).join('')}</div>`:''}
+<div class="bg"><button class="btn bs" ${S.swIdeas.length<2?'disabled':''} onclick="S.swPhase='draft';R()">✍️ 开始写初稿</button></div></div>`:''}
+${S.swPhase==='draft'?`<div class="cd"><div class="tt">✍️ 写初稿: ${S.swTopic}</div>
+<div style="font-size:12px;color:var(--g5);margin-bottom:8px">素材: ${S.swIdeas.join('、')}</div>
+<div class="ia" style="flex-direction:column"><textarea id="swDraft" rows="6" placeholder="开始写作...">${S.swDraft}</textarea>
+<button class="btn bp" style="align-self:flex-end" onclick="S.swDraft=document.getElementById('swDraft').value;S.swPhase='feedback';S.swFeedback='结构清晰，开头引人入胜👍\\n建议：中间段落可以加入更多细节描写，用比喻让文章更生动。\\n结尾可以呼应开头，升华主题。';R()">📤 提交获取反馈</button></div></div>`:''}
+${S.swPhase==='feedback'?`<div class="cd"><div class="tt">💬 AI反馈</div>
+<div class="msg mai"><div class="ml">🤖 AI写作助手</div>${S.swFeedback}</div>
+<div class="bg"><button class="btn bp" onclick="S.swPhase='final';R()">✏️ 修改定稿</button><button class="btn bo" onclick="S.swPhase='draft';R()">↩ 继续修改</button></div></div>`:''}
+${S.swPhase==='final'?`<div class="cd"><div class="tt">✅ 定稿完成</div>
+<div style="padding:12px;background:var(--sl);border-radius:8px;font-size:13px;white-space:pre-wrap">${S.swDraft||'（你的作文内容）'}</div>
+<div class="bg"><button class="btn bp" onclick="S.swPhase='idle';S.swDraft='';S.swIdeas=[];S.swFeedback='';R()">📝 写新作文</button></div></div>`:''}`;
+}
+
+// ===== Feynman Enhanced =====
+function rFeynman(){
+if(!S.feynmanSession)return `<div class="cd"><div class="tt">🧑‍🏫 费曼教学法 · 你来当老师</div>
+<div style="font-size:13px;color:var(--g5);margin-bottom:12px">选择一个AI学生，向TA讲解知识点</div>
+<div class="scg">${[
+{p:'curious_baby',em:'🐣',nm:'好奇宝宝',ds:'1-2年级·问为什么'},
+{p:'diligent_student',em:'📚',nm:'认真同学',ds:'3-4年级·要举例'},
+{p:'rigorous_scholar',em:'🧠',nm:'较真学霸',ds:'5-6年级·挑边界'},
+{p:'confused_bug',em:'🐛',nm:'糊涂虫',ds:'通用·故意搞错'},
+].map(s=>`<div class="sc" onclick="startFeynman('${s.p}')"><span class="em">${s.em}</span><div class="nm">${s.nm}</div><div style="font-size:10px;color:var(--g5)">${s.ds}</div></div>`).join('')}</div>
+<div class="ia" style="margin-top:12px"><input type="text" id="feynmanKP" placeholder="输入要讲解的知识点，如：分数加法" style="text-align:center">
+</div></div>`;
+const fs=S.feynmanSession;
+if(fs.isComplete)return `<div class="cd"><div class="tt">✅ 教学完成！</div>
+<div id="feynmanScore">加载评分中...</div></div>`;
+const phases=['初次讲解','追问深挖','纠错引导','总结升华'];
+const phaseMap=['initial_explain','probing','deliberate_misunderstand','summary'];
+const pi=phaseMap.indexOf(fs.currentPhase);
+return `<div class="cd"><div class="tt">🧑‍🏫 你在教: ${fs.knowledgePoint}</div>
+<div style="font-size:12px;color:var(--g5)">AI学生: ${fs.persona==='curious_baby'?'🐣好奇宝宝':fs.persona==='diligent_student'?'📚认真同学':fs.persona==='rigorous_scholar'?'🧠较真学霸':'🐛糊涂虫'}</div>
+<div style="display:flex;gap:4px;margin:8px 0">${phases.map((p,i)=>`<span class="b ${i<pi?'b-s':i===pi?'b-p':''}" style="${i>pi?'background:var(--g1);color:var(--g5)':''}">${i<pi?'✓':''}${p}</span>`).join('')}</div></div>
+<div class="cd"><div class="chat" style="max-height:300px;overflow-y:auto">
+${fs.exchanges.map(e=>e.role==='ai_student'?`<div class="msg mai"><div class="ml">${fs.persona==='curious_baby'?'🐣':fs.persona==='diligent_student'?'📚':fs.persona==='rigorous_scholar'?'🧠':'🐛'} AI学生</div>${e.text}</div>`
+:`<div class="msg mch"><div class="ml">🧑‍🏫 小老师</div>${e.text}</div>`).join('')}</div></div>
+${fs.currentPhase==='initial_explain'||fs.currentPhase==='probing'?`<div class="cd">
+<div class="ia"><input type="text" id="feynmanInput" placeholder="向AI学生讲解..." onkeydown="if(event.key==='Enter')submitFeynmanExplain()">
+<button class="btn bp" onclick="submitFeynmanExplain()">讲解</button></div>
+<div class="bg"><button class="btn bsm bo" onclick="advanceFeynmanPhase()">进入下一阶段 →</button>
+<button class="btn bsm bw" onclick="requestFeynmanSummary()">直接总结</button></div></div>`:''}
+${fs.currentPhase==='deliberate_misunderstand'?`<div class="cd"><div class="tt">🐛 AI故意理解错了！纠正TA</div>
+<div class="bg"><button class="btn bp" onclick="generateFeynmanMisunderstand()">让AI说出错误理解</button></div>
+<div class="ia" style="margin-top:8px"><input type="text" id="feynmanCorrect" placeholder="纠正AI的错误理解..." onkeydown="if(event.key==='Enter')submitFeynmanCorrection()">
+<button class="btn bd" onclick="submitFeynmanCorrection()">纠正</button></div>
+<div class="bg"><button class="btn bsm bo" onclick="requestFeynmanSummary()">进入总结 →</button></div></div>`:''}
+${fs.currentPhase==='summary'?`<div class="cd"><div class="tt">📝 总结你教的内容</div>
+<div class="ia"><input type="text" id="feynmanSummary" placeholder="总结关键要点..." onkeydown="if(event.key==='Enter')submitFeynmanSummary()">
+<button class="btn bs" onclick="submitFeynmanSummary()">提交总结</button></div></div>`:''}`;
+}
+
+// ===== TAB 4: MATH =====
+function rMath(){
+const subs=[{id:'quiz',em:'🔢',nm:'计算题批改',ds:'口算练习'},{id:'multisol',em:'🧮',nm:'一题多解',ds:'多种解法'},{id:'metaphor',em:'💡',nm:'概念比喻',ds:'比喻库'}];
+let h=subNav('math',subs);
+if(S.sub.math==='quiz') h+=rMathQuiz();
+else if(S.sub.math==='multisol') h+=rMultiSol();
+else h+=rMetaphor();
+return h;
+}
+function rMathQuiz(){
+if(S.mStep>=MP.length){
+const ok=S.mRes.filter(r=>r.ok).length,tot=S.mRes.length,acc=Math.round(ok/tot*100);
+return `<div class="cd"><div class="tt">📊 计算题报告</div><div class="sg">
+<div class="si"><div class="v" style="color:${acc>=70?'var(--s)':'var(--d)'}">${acc}%</div><div class="l">正确率</div></div>
+<div class="si"><div class="v">${ok}/${tot}</div><div class="l">正确/总题</div></div></div>
+<table class="tbl"><tr><th>题目</th><th>答案</th><th>结果</th></tr>
+${S.mRes.map(r=>`<tr><td>${r.x}</td><td>${r.a}</td><td>${r.ok?'<span style="color:var(--s)">✓</span>':`<span style="color:var(--d)">✗→${r.c}</span>`}</td></tr>`).join('')}</table></div>
+<div class="bg"><button class="btn bp" onclick="S.mStep=0;S.mRes=[];R()">再做一组</button></div>`;}
+const p=MP[S.mStep];
+return `<div class="cd"><div class="tt">🔢 计算题批改</div><div style="font-size:12px;color:var(--g5)">第${S.mStep+1}/${MP.length}题 · 知识点: ${p.k}</div>
+<div class="pb"><div class="pf" style="width:${S.mStep/MP.length*100}%;background:var(--s)"></div></div></div>
+<div class="cd" style="text-align:center;padding:24px"><div style="font-size:32px;font-weight:700;margin:16px 0">${p.x} = ?</div>
+<div class="ia" style="justify-content:center"><input type="number" id="mi" placeholder="输入答案" style="max-width:160px;text-align:center;font-size:18px" onkeydown="if(event.key==='Enter')subM()">
+<button class="btn bp" onclick="subM()">提交</button></div></div>`;
+}
+function rMultiSol(){
+return `<div class="cd"><div class="tt">🧮 一题多解</div>
+<div style="font-size:13px;color:var(--g5);margin-bottom:12px">同一道题，多种解法，对比优劣</div>
+<div class="scg">${[
+{nm:'鸡兔同笼',desc:'方程法 vs 假设法',prob:{id:'p1',content:'鸡兔同笼，共有头35个，脚94只，问鸡和兔各有多少只？',answer:'鸡23兔12',knowledgePointIds:['kp1'],difficulty:3,category:'鸡兔同笼'}},
+{nm:'行程问题',desc:'方程法 vs 画图法',prob:{id:'p2',content:'甲乙两地相距240公里，A车速度60km/h，B车速度40km/h，同时出发相向而行，几小时后相遇？',answer:'2.4小时',knowledgePointIds:['kp2'],difficulty:3,category:'行程问题'}},
+{nm:'工程问题',desc:'分数法 vs 比例法',prob:{id:'p3',content:'一项工程，甲单独做需要10天，乙单独做需要15天，两人合作需要几天？',answer:'6天',knowledgePointIds:['kp3'],difficulty:3,category:'工程问题'}},
+].map(s=>`<div class="sc" onclick="doMultiSol(${JSON.stringify(s.prob).replace(/"/g,'&quot;')})"><div class="nm">${s.nm}</div><div style="font-size:11px;color:var(--g5)">${s.desc}</div></div>`).join('')}</div></div>
+<div id="multiSolResult"></div>`;
+}
+
+function rMetaphor(){
+return `<div class="cd"><div class="tt">💡 概念比喻库</div>
+<div style="font-size:13px;color:var(--g5);margin-bottom:8px">用生活比喻理解数学概念</div>
+<div class="gb">${[1,2,3,4,5,6].map(g=>`<div class="gbtn${S.grade===g?' act':''}" onclick="switchGrade(${g});loadMetaphors(${g})">${g}年级</div>`).join('')}</div></div>
+<div id="metaphorResult"><div class="cd" style="text-align:center;color:var(--g5)">点击年级加载比喻库</div></div>`;
+}
+
+// ===== TAB 5: ENGLISH =====
+function rEnglish(){
+const subs=[{id:'dialogue',em:'🗣️',nm:'口语对话',ds:'情景练习'},{id:'companion',em:'🤖',nm:'AI语伴定制',ds:'4位语伴'}];
+let h=subNav('english',subs);
+if(S.sub.english==='dialogue') h+=rDialogue();
+else h+=rCompanion();
+return h;
+}
+function rDialogue(){
+if(S.ePhase==='select')return `<div class="cd"><div class="tt">🗣️ 口语对话 · 情景选择</div>
+<div class="scg">${[{id:'shop',em:'🛒',nm:'购物'},{id:'dir',em:'🗺️',nm:'问路'},{id:'intro',em:'👋',nm:'自我介绍'},{id:'food',em:'🍔',nm:'点餐'}].map(s=>
+`<div class="sc${S.eScn===s.id?' sel':''}" onclick="S.eScn='${s.id}';R()"><span class="em">${s.em}</span><div class="nm">${s.nm}</div></div>`).join('')}</div>
+<div class="bg"><button class="btn bp" ${!S.eScn?'disabled':''} onclick="S.ePhase='dlg';S.eTurn=0;R()">开始对话</button></div></div>`;
+if(S.ePhase==='dlg'){const sh=ED.slice(0,S.eTurn+1),done=sh.length>=ED.length,isCh=!done&&ED[sh.length]?.r==='ch';
+return `<div class="cd"><div class="tt">🛒 At the Shop</div></div>
+<div class="cd"><div class="chat">${sh.map(d=>d.r==='ai'?`<div class="msg mai"><div class="ml">🤖 Shopkeeper</div>${d.t}</div>`
+:`<div class="msg mch"><div class="ml">👧 You</div>${d.t}${d.sc?`<div style="font-size:11px;margin-top:4px;color:var(--g5)">🎤 发音:${d.sc}分</div>`:''}</div>`).join('')}</div>
+${!done?`<div class="bg" style="justify-content:center"><button class="btn bp" onclick="if(S.eTurn<${ED.length-1}){S.eTurn++;R()}">${isCh?'🎤 模拟说话':'▶ 继续'}</button></div>`
+:`<div class="bg" style="justify-content:center"><button class="btn bs" onclick="S.ePhase='rpt';R()">📊 查看报告</button></div>`}</div>`;}
+const cs=ED.filter(d=>d.r==='ch'),avg=Math.round(cs.reduce((s,d)=>s+(d.sc||0),0)/cs.length);
+return `<div class="cd"><div class="tt">📊 口语评测报告</div><div class="sg">
+<div class="si"><div class="v" style="color:var(--p)">${avg}</div><div class="l">发音</div></div>
+<div class="si"><div class="v" style="color:var(--s)">85</div><div class="l">词汇</div></div>
+<div class="si"><div class="v" style="color:var(--w)">78</div><div class="l">流利度</div></div>
+<div class="si"><div class="v" style="color:var(--p)">82</div><div class="l">综合</div></div></div></div>
+<div class="bg"><button class="btn bp" onclick="S.ePhase='select';S.eTurn=0;S.eScn=null;R()">再来一次</button></div>`;
+}
+function rCompanion(){
+return `<div class="cd"><div class="tt">🤖 AI语伴定制</div>
+<div style="font-size:13px;color:var(--g5);margin-bottom:12px">选择适合你的AI语伴风格</div>
+<div class="bg"><button class="btn bp" onclick="loadCompanions()">🔄 从后端加载语伴</button></div></div>
+<div id="companionResult">
+${[{name:'Leo',em:'🦁',age:9,nat:'American',style:'gentle',level:'beginner',line:'Hey! I\'m Leo! Do you like soccer?'},
+{name:'Emma',em:'👩‍🏫',age:11,nat:'British',style:'encouraging',level:'intermediate',line:'Hello there! I\'m Emma.'},
+{name:'Alex',em:'🧑‍🚀',age:13,nat:'Australian',style:'direct',level:'intermediate',line:'G\'day! I\'m Alex from Sydney.'},
+{name:'Professor James',em:'🎓',age:45,nat:'British',style:'direct',level:'advanced',line:'Good day. I\'m Professor James.'}].map(c=>
+`<div class="cd"><div style="display:flex;align-items:center;gap:10px">
+<span style="font-size:28px">${c.em}</span><div style="flex:1"><div style="font-size:14px;font-weight:600">${c.name} <span class="b b-p">${c.style}</span></div>
+<div style="font-size:12px;color:var(--g5)">${c.age}岁 · ${c.nat} · ${c.level}</div>
+<div style="font-size:12px;color:var(--p);margin-top:2px">"${c.line}"</div></div>
+<button class="btn bsm bo" onclick="loadCompanionPrompt('${c.name}')">查看</button></div></div>`).join('')}</div>`;
+}
+
+// ===== TAB 6: MANAGE =====
+function rManage(){
+const subs=[{id:'errors',em:'📊',nm:'错题归因',ds:'原因分类'},{id:'review',em:'🔄',nm:'间隔复习',ds:'SM-2算法'},{id:'focus',em:'⏱️',nm:'专注计时',ds:'番茄钟'},{id:'oral',em:'🎤',nm:'口头录音',ds:'语音判题'},{id:'habit',em:'🔥',nm:'习惯打卡',ds:'连续记录'},{id:'multiweek',em:'📅',nm:'多周期计划',ds:'长期规划'}];
+let h=subNav('manage',subs);
+const fn={errors:rErrors,review:rReview,focus:rFocus,oral:rOral,habit:rHabit,multiweek:rMultiWeek};
+h+=(fn[S.sub.manage]||rErrors)();
+return h;
+}
+function rErrors(){
+const causes={'粗心':S.errors.filter(e=>e.cause==='粗心').length,'知识缺漏':S.errors.filter(e=>e.cause==='知识缺漏').length,'审题不清':S.errors.filter(e=>e.cause==='审题不清').length};
+return `<div class="cd"><div class="tt">📊 错题归因分析</div>
+<div style="display:flex;gap:8px;margin:8px 0">${Object.entries(causes).map(([k,v])=>`<span class="b ${k==='粗心'?'b-w':k==='知识缺漏'?'b-d':'b-p'}">${k}: ${v}题</span>`).join('')}</div></div>
+${S.errors.map(e=>`<div class="cd"><div style="display:flex;justify-content:space-between;align-items:start">
+<div><div style="font-size:15px;font-weight:600">${e.q}</div><div style="font-size:12px;color:var(--g5)">${e.su} · ${e.tp} · <span class="b ${e.cause==='粗心'?'b-w':e.cause==='知识缺漏'?'b-d':'b-p'}">${e.cause}</span></div></div>
+<span class="b ${e.st==='mastered'?'b-s':e.st==='reviewing'?'b-w':'b-d'}">${e.st==='mastered'?'✓已掌握':e.st==='reviewing'?'复习中('+e.sk+'/3)':'待复习'}</span></div>
+<div style="margin-top:8px;padding:8px;background:var(--g50);border-radius:6px;font-size:12px">
+<div>你的答案: <span style="color:var(--d)">${e.ca}</span> → 正确: <span style="color:var(--s)">${e.co}</span></div>
+<div style="margin-top:4px">🔍 根本薄弱点: <strong style="color:var(--p)">${e.rk}</strong></div>
+<div style="margin-top:4px">💊 补救: ${e.cause==='粗心'?'加强验算习惯，做完检查一遍':e.cause==='知识缺漏'?'回顾基础知识点，做变式题巩固':'练习审题画重点，圈出关键词'}</div></div>
+${e.st!=='mastered'?`<div class="bg"><button class="btn bsm bs" onclick="mErr('${e.id}')">✓标记正确</button></div>`:''}</div>`).join('')}`;
+}
+function rReview(){
+if(S.rPhase==='list')return `<div class="cd"><div class="tt">🔄 今日复习任务</div>
+<div class="msg mai" style="margin-bottom:12px"><div class="ml">🤖 AI</div>今天有${RI.length}项需要复习！先回忆，再看答案📝</div>
+${RI.map(r=>`<div style="display:flex;align-items:center;gap:10px;padding:8px;border-bottom:1px solid var(--g1)">
+<span class="b b-p">${r.tp}</span><span style="font-size:14px;flex:1">${r.ct}</span>
+${r.df?`<span class="b ${r.df==='easy'?'b-s':r.df==='hard'?'b-d':'b-w'}">${{easy:'😊轻松',medium:'🤔一般',hard:'😰困难'}[r.df]}</span>`:'<span class="b" style="background:var(--g1)">待复习</span>'}
+</div>`).join('')}<div class="bg"><button class="btn bp" onclick="S.rPhase='q';S.rStep=0;RI.forEach(r=>r.df=null);R()">开始复习</button></div></div>`;
+if(S.rPhase==='q'){const it=RI[S.rStep];return `<div class="cd"><div style="font-size:12px;color:var(--g5)">复习${S.rStep+1}/${RI.length}</div>
+<div class="pb"><div class="pf" style="width:${S.rStep/RI.length*100}%;background:var(--s)"></div></div></div>
+<div class="cd" style="text-align:center;padding:24px"><span class="b b-p">${it.tp}</span>
+<div style="font-size:28px;font-weight:700;margin:20px 0">${it.ct}</div>
+<div class="bg" style="justify-content:center"><button class="btn bp" onclick="S.rPhase='a';R()">👀 查看答案</button></div></div>`;}
+if(S.rPhase==='a'){const it=RI[S.rStep];return `<div class="cd" style="text-align:center;padding:24px"><span class="b b-p">${it.tp}</span>
+<div style="font-size:24px;font-weight:700;margin:16px 0">${it.ct}</div>
+<div style="padding:12px;background:var(--sl);border-radius:8px;margin:12px 0;font-size:16px;color:#065F46">✅ ${it.ans}</div>
+<div class="bg" style="justify-content:center"><button class="btn bs" onclick="subRD('easy')">😊轻松</button>
+<button class="btn bw" onclick="subRD('medium')">🤔一般</button><button class="btn bd" onclick="subRD('hard')">😰困难</button></div></div>`;}
+const e=RI.filter(r=>r.df==='easy').length,m=RI.filter(r=>r.df==='medium').length,h=RI.filter(r=>r.df==='hard').length;
+return `<div class="cd"><div class="tt">✅ 复习完成！</div><div class="sg3"><div class="si"><div class="v" style="color:var(--s)">${e}</div><div class="l">😊轻松</div></div>
+<div class="si"><div class="v" style="color:var(--w)">${m}</div><div class="l">🤔一般</div></div>
+<div class="si"><div class="v" style="color:var(--d)">${h}</div><div class="l">😰困难</div></div></div></div>
+<div class="bg"><button class="btn bp" onclick="S.rPhase='list';S.rStep=0;R()">返回</button></div>`;
+}
+
+function rFocus(){
+if(S.fPhase==='ready'){const cfg=gcfg();
+return `<div class="cd"><div class="tt">⏱ 专注计时</div>
+<div style="font-size:13px;color:var(--g5)">匹配${cfg.lb}专注力: ${cfg.foc}分钟/轮 × 3轮</div>
+<div class="bg"><button class="btn bp" onclick="startFocus()">▶ 开始专注</button></div></div>
+<div class="cd"><div class="tt">🧘 健康提醒 <span class="b b-p">增强版</span></div>
+<div class="bg"><button class="btn bp" onclick="loadHealthContent()">📋 加载坐姿指导+护眼方法+眼保健操</button></div></div>
+<div id="healthContent"></div>
+<div class="cd"><div class="tt">✍️ 书写评分</div>
+<div class="bg"><button class="btn bp" onclick="doWriteEval()">📝 模拟评分</button></div>
+${S.wEval?`<div class="sg3" style="margin-top:12px">
+<div class="si"><div class="v" style="color:var(--p)">${S.wEval.n}</div><div class="l">工整度</div></div>
+<div class="si"><div class="v" style="color:var(--s)">${S.wEval.a}</div><div class="l">正确率</div></div>
+<div class="si"><div class="v" style="color:var(--w)">${S.wEval.s}</div><div class="l">速度</div></div></div>
+<div style="text-align:center"><div style="font-size:28px;font-weight:700;color:var(--p)">${S.wEval.o}分</div></div>`:''}</div>`;}
+const isFocus=S.fFocus,min=Math.floor(S.fSec/60),sec=S.fSec%60;
+return `<div class="cd" style="text-align:center">
+<div class="tt" style="justify-content:center">⏱ 第${S.fRound}/3轮 · ${isFocus?'专注中':'休息中'}</div>
+<div class="tr" style="background:${isFocus?`conic-gradient(var(--p) ${S.fSec/(gcfg().foc*60)*360}deg, var(--g2) 0deg)`:`conic-gradient(var(--s) ${S.fSec/120*360}deg, var(--g2) 0deg)`}">
+<div style="color:${isFocus?'var(--p)':'var(--s)'}">${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}</div>
+<div>${isFocus?'🎯 专注':'☕ 休息'}</div></div>
+<div class="bg" style="justify-content:center"><button class="btn ${isFocus?'bd':'bs'}" onclick="skipFocus()">${isFocus?'⏭ 跳过':'⏭ 继续'}</button>
+<button class="btn bo" onclick="stopFocus()">⏹ 结束</button></div></div>`;
+}
+
+function rOral(){
+if(S.omPhase==='ready')return `<div class="cd"><div class="tt">🎤 口头作业中心</div></div>
+<div class="cd"><div class="tt">🔢 口算口述语音判题</div>
+<div class="bg"><button class="btn bp" onclick="S.omPhase='go';S.omStep=0;S.omRes=[];R()">🎤 开始口算</button></div></div>
+<div class="cd"><div class="tt">📼 音频成长集</div>
+${S.recs.map(r=>`<div style="display:flex;align-items:center;gap:10px;padding:8px;border-bottom:1px solid var(--g1)">
+<span style="font-size:20px">${r.tp==='朗读'?'📖':'📜'}</span>
+<div style="flex:1"><div style="font-size:13px;font-weight:600">${r.ti}</div>
+<div style="font-size:11px;color:var(--g5)">${r.d} · ${r.tp}</div></div>
+<div style="text-align:right"><div style="font-size:16px;font-weight:700;color:var(--p)">${r.sc}分</div></div></div>`).join('')}
+<div style="margin-top:8px;padding:8px;background:var(--sl);border-radius:8px;font-size:12px">📈 课文《春》朗读 78→88 (+10分)</div></div>`;
+if(S.omStep>=OMQ.length){const ok=S.omRes.filter(r=>r.ok).length,acc=Math.round(ok/OMQ.length*100);
+return `<div class="cd"><div class="tt">📊 口算报告</div><div class="sg">
+<div class="si"><div class="v" style="color:${acc>=70?'var(--s)':'var(--d)'}">${acc}%</div><div class="l">正确率</div></div>
+<div class="si"><div class="v">${ok}/${OMQ.length}</div><div class="l">正确/总题</div></div></div></div>
+<div class="bg"><button class="btn bp" onclick="S.omPhase='ready';R()">返回</button></div>`;}
+const q=OMQ[S.omStep];
+return `<div class="cd"><div class="tt">🔢 口算 第${S.omStep+1}/${OMQ.length}题</div>
+<div class="pb"><div class="pf" style="width:${S.omStep/OMQ.length*100}%;background:var(--s)"></div></div></div>
+<div class="cd" style="text-align:center;padding:24px"><div style="font-size:36px;font-weight:700;margin:16px 0">${q.x} = ?</div>
+<div class="ia" style="justify-content:center"><input type="text" id="omi" placeholder="输入答案" style="max-width:180px;text-align:center;font-size:18px" onkeydown="if(event.key==='Enter')subOM()">
+<button class="btn bp" onclick="subOM()">提交</button></div></div>`;
+}
+
+function rHabit(){
+const milestones=[{d:3,n:'三天小达人',pts:30},{d:7,n:'一周坚持者',pts:70},{d:14,n:'两周学霸',pts:150},{d:21,n:'习惯养成大师',pts:300},{d:30,n:'月度冠军',pts:500}];
+return `<div class="cd" style="text-align:center;padding:24px">
+<div class="tt" style="justify-content:center">🔥 连续打卡</div>
+<div class="sn">${S.streak}</div><div style="font-size:14px;color:var(--g5)">天</div>
+${!S.hToday?`<div class="bg" style="justify-content:center"><button class="btn bp ap" onclick="doCheckin()">✅ 今日打卡</button></div>`
+:`<div class="nt ns" style="margin-top:12px;font-size:13px">✅ 今日已打卡！</div>`}</div>
+<div class="cd"><div class="tt">🏅 里程碑</div>
+${milestones.map(m=>`<div style="display:flex;align-items:center;gap:10px;padding:6px;border-bottom:1px solid var(--g1)">
+<span style="font-size:18px">${S.streak>=m.d?'🏅':'🔒'}</span>
+<div style="flex:1;opacity:${S.streak>=m.d?1:.5}"><span style="font-size:13px;font-weight:600">${m.n}</span>
+<span style="font-size:11px;color:var(--g5)"> · ${m.d}天 · ${m.pts}积分</span></div>
+${S.streak>=m.d?'<span class="b b-s">✓</span>':''}</div>`).join('')}</div>`;
+}
+
+function rMultiWeek(){
+const plans=[
+{nm:'21天应用题突破',tid:'word_problem_21day',desc:'破冰期→攻坚期→飞跃期',days:21},
+{nm:'14天几何入门',tid:'geometry_14day',desc:'解构期→建构期',days:14},
+{nm:'4周期末冲刺',tid:'exam_sprint_28day',desc:'心态重塑→方法论→模拟→实战',days:28}];
+return `<div class="cd"><div class="tt">📅 多周期学习计划</div>
+<div style="font-size:13px;color:var(--g5);margin-bottom:12px">选择模板创建长期学习计划</div>
+${plans.map(p=>`<div class="cd"><div style="display:flex;justify-content:space-between;align-items:center">
+<div><div style="font-size:14px;font-weight:600">${p.nm}</div>
+<div style="font-size:12px;color:var(--g5)">${p.desc} · ${p.days}天</div></div>
+<button class="btn bsm bp" onclick="createMultiWeek('${p.tid}')">创建</button></div></div>`).join('')}</div>
+<div id="multiWeekResult"></div>`;
+}
+
+// ===== TAB 7: PROFILE =====
+function rProfile(){
+return `<div class="cd"><div class="tt">📈 能力画像</div>
+<div style="display:flex;justify-content:center;gap:24px;margin:16px 0">
+${[{l:'语文',s:82,c:'var(--s)'},{l:'数学',s:68,c:'var(--w)'},{l:'英语',s:75,c:'var(--p)'}].map(r=>
+`<div style="text-align:center"><div style="width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;background:conic-gradient(${r.c} ${r.s*3.6}deg,var(--g1) 0deg);color:${r.c};margin:0 auto 6px">${r.s}</div>
+<div style="font-size:12px;color:var(--g5)">${r.l}</div></div>`).join('')}</div></div>
+<div class="cd"><div class="tt">🔥 知识点热力图</div><div style="display:flex;flex-wrap:wrap;gap:6px">
+${[{n:'加法',s:92},{n:'减法退位',s:35},{n:'乘法',s:78},{n:'运算顺序',s:55},{n:'生字词',s:85},{n:'古诗词',s:70},{n:'阅读理解',s:65},{n:'口语',s:75}].map(k=>{
+const bg=k.s>=80?'var(--sl)':k.s>=60?'var(--wl)':'var(--dl)',co=k.s>=80?'#065F46':k.s>=60?'#92400E':'#991B1B';
+return `<span style="padding:4px 8px;border-radius:6px;font-size:11px;background:${bg};color:${co}">${k.n} ${k.s}</span>`;}).join('')}</div></div>
+<div class="cd"><div class="tt">🧠 布鲁姆认知层级</div>
+${['记忆 95','理解 80','应用 65','分析 40','评价 20','创造 10'].map((l,i)=>{const[n,s]=l.split(' ');
+return `<div style="display:flex;align-items:center;gap:8px;margin:4px 0"><span style="width:40px;font-size:12px;text-align:right">${n}</span>
+<div style="flex:1;height:16px;background:var(--g1);border-radius:4px;overflow:hidden"><div style="height:100%;width:${s}%;background:hsl(${240-i*30},70%,60%);border-radius:4px"></div></div>
+<span style="width:30px;font-size:12px;color:var(--g5)">${s}%</span></div>`;}).join('')}</div>
+<div class="cd"><div class="tt">📊 学习习惯</div><div style="font-size:13px;display:flex;flex-direction:column;gap:6px">
+<div>📅 日均学习: <strong>35分钟</strong></div><div>⏰ 偏好时间: <strong>下午4-6点</strong></div>
+<div>📈 一致性: <strong>80%</strong></div><div>🆘 求助频率: <strong>低</strong></div></div></div>
+<div class="cd"><div class="tt">🎯 学段适配</div>
+<div class="gb">${[1,2,3,4,5,6].map(g=>`<div class="gbtn${S.grade===g?' act':''}" onclick="switchGrade(${g})">${g}年级</div>`).join('')}</div>
+<div style="margin-top:8px"><table class="tbl"><tr><th></th><th>低段1-2</th><th>中段3-4</th><th>高段5-6</th></tr>
+<tr><td>时长</td><td>20分钟</td><td>30分钟</td><td>45分钟</td></tr>
+<tr><td>专注</td><td>8分钟</td><td>12分钟</td><td>20分钟</td></tr>
+<tr><td>风格</td><td>趣味</td><td>引导</td><td>自主</td></tr></table></div></div>`;
+}
+// ===== TAB 8: PARENT =====
+function rParent(){
+const subs=[{id:'notifs',em:'🔔',nm:'通知消息',ds:'实时推送'},{id:'parenting',em:'🧠',nm:'育儿模式',ds:'5种模式'},{id:'coaching',em:'💬',nm:'陪辅话术',ds:'正确示范'},{id:'interact',em:'👨‍👧',nm:'亲子互动',ds:'互动任务'},{id:'tutorials',em:'📚',nm:'辅导教程',ds:'极简教程'},{id:'summary',em:'📋',nm:'作业摘要',ds:'每日汇总'}];
+let h=`<div class="cd" style="background:linear-gradient(135deg,#EEF2FF,#F5F3FF);border:none;text-align:center;padding:12px">
+<div style="font-size:20px">👨</div><div style="font-size:14px;font-weight:600">家长端 · 只读模式</div></div>`;
+h+=subNav('parent',subs);
+const fn={notifs:rNotifs,parenting:rParenting,coaching:rCoaching,interact:rInteract,tutorials:rTutorials,summary:rSummary};
+h+=(fn[S.sub.parent]||rNotifs)();
+return h;
+}
+function rNotifs(){
+return `<div class="cd"><div class="tt">🔔 通知消息</div>
+${S.notifs.map(n=>`<div class="nt ${n.t}" style="font-size:12px">${n.m}<div style="color:var(--g5);margin-top:2px;font-size:11px">${n.tm}</div></div>`).join('')}</div>`;
+}
+function rParenting(){
+const modes=[
+{nm:'学习型',em:'📚',desc:'重视知识获取，鼓励探索',ai:'AI增加知识拓展内容，推荐课外阅读'},
+{nm:'容错型',em:'💚',desc:'允许犯错，强调过程',ai:'AI降低错误惩罚感，增加鼓励反馈'},
+{nm:'边界型',em:'🛡️',desc:'明确规则，培养自律',ai:'AI严格执行时间限制，任务完成才解锁'},
+{nm:'沟通型',em:'💬',desc:'注重表达，亲子对话',ai:'AI增加口头表达任务，鼓励分享想法'},
+{nm:'情绪稳定型',em:'🧘',desc:'关注情绪，先安抚后学习',ai:'AI检测挫败情绪时自动降低难度，插入放松环节'}];
+return `<div class="cd"><div class="tt">🧠 育儿模式</div>
+<div style="font-size:13px;color:var(--g5);margin-bottom:12px">选择匹配您教育理念的模式，AI将调整行为</div>
+${modes.map(m=>`<div class="cd"><div style="display:flex;align-items:center;gap:10px">
+<span style="font-size:24px">${m.em}</span><div style="flex:1"><div style="font-size:14px;font-weight:600">${m.nm}</div>
+<div style="font-size:12px;color:var(--g5)">${m.desc}</div></div></div>
+<div style="margin-top:6px;padding:6px 10px;background:var(--pl);border-radius:6px;font-size:11px;color:var(--p)">🤖 ${m.ai}</div></div>`).join('')}</div>`;
+}
+function rCoaching(){
+return `<div class="cd"><div class="tt">💬 陪辅话术库</div>
+<div class="scg">${Object.entries(COACH).map(([k,v])=>
+`<div class="sc${S.pcSit===k?' sel':''}" onclick="loadCoachingScript('${k}')"><span class="em">${v.cat==='oral'?'🎤':'✏️'}</span><div class="nm" style="font-size:11px">${v.sit.slice(0,8)}</div></div>`).join('')}</div>
+${S.pcSit?`<div style="margin-top:12px">
+<div class="nt nd" style="font-size:13px"><strong>❌ 错误示范:</strong> ${COACH[S.pcSit].wr}</div>
+<div class="nt ns" style="font-size:13px"><strong>✅ 正确话术:</strong> ${COACH[S.pcSit].ri}</div>
+<div style="font-size:12px;color:var(--g5);margin-top:8px">💡 ${COACH[S.pcSit].tips.join(' | ')}</div></div>`:''}</div>`;
+}
+function rInteract(){
+return `<div class="cd"><div class="tt">👨‍👧 亲子互动任务</div>
+${[{em:'📜',t:'亲子对背古诗',d:'家长和孩子轮流背诵',pts:20},{em:'📖',t:'角色扮演读课文',d:'分角色有感情朗读',pts:25},{em:'✍️',t:'亲子练字打卡',d:'一起练字互相点评',pts:25},{em:'🏆',t:'优秀作业展示墙',d:'挑选本周最满意作业',pts:15}].map(t=>
+`<div style="display:flex;align-items:center;gap:10px;padding:8px;border-bottom:1px solid var(--g1)">
+<span style="font-size:20px">${t.em}</span><div style="flex:1"><div style="font-size:13px;font-weight:600">${t.t}</div>
+<div style="font-size:11px;color:var(--g5)">${t.d} · ${t.pts}积分</div></div>
+<button class="btn bsm bp" onclick="alert('🎉 完成「${t.t}」！+${t.pts}积分')">参与</button></div>`).join('')}</div>`;
+}
+function rTutorials(){
+return `<div class="cd"><div class="tt">📚 家长辅导教程</div>
+${[{em:'🔤',t:'拼音辅导极简教程',d:'声母韵母怎么教'},{em:'✏️',t:'书写指导极简教程',d:'正确握笔和笔画练习'},{em:'🔢',t:'数学启蒙教程',d:'用实物帮孩子建立数感'},{em:'🌍',t:'英语启蒙教程',d:'26个字母发音入门'}].map(t=>
+`<div style="display:flex;align-items:center;gap:10px;padding:8px;border-bottom:1px solid var(--g1)">
+<span style="font-size:20px">${t.em}</span><div style="flex:1"><div style="font-size:13px;font-weight:600">${t.t}</div>
+<div style="font-size:11px;color:var(--g5)">${t.d}</div></div><span class="b b-p">3分钟</span></div>`).join('')}</div>`;
+}
+function rSummary(){
+return `<div class="cd"><div class="tt">📋 作业完成摘要</div>
+<div style="padding:12px;background:var(--g50);border-radius:8px;font-size:13px;line-height:1.8">
+📋 <strong>小明同学 今日作业摘要</strong><br>
+🎤 口头作业：2项，综合评分 86分<br>✏️ 书写作业：3项，综合正确率 82%<br>📊 总计：完成5/5项任务</div>
+<div class="bg"><button class="btn bsm bp" onclick="genSummary()">🔗 生成并分享</button></div></div>`;
+}
+
+// ===== API HELPER =====
+const API='http://localhost:3210/api';
+async function post(url,body){const r=await fetch(API+url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});return r.json();}
+async function get(url){return(await fetch(API+url)).json();}
+function showStatus(msg,ok=true){const d=document.createElement('div');d.className='nt '+(ok?'ns':'nd');d.style.cssText='position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:99;max-width:400px;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,.15)';
+d.textContent=(ok?'✅ ':'❌ ')+msg;document.body.appendChild(d);setTimeout(()=>d.remove(),2500);}
+
+// ===== ACTIONS =====
+function subM(){const i=document.getElementById('mi'),a=parseInt(i.value);if(isNaN(a))return;const p=MP[S.mStep],ok=a===p.c;
+S.mRes.push({x:p.x,a,c:p.c,ok});S.mStep++;R();const ni=document.getElementById('mi');if(ni){ni.value='';ni.focus();}}
+
+function subD(){const i=document.getElementById('di'),a=i.value.trim();if(!a)return;const w=DW[S.dStep];
+post('/classify',{content:w.w+' 听写',subject:'chinese'}).catch(()=>{});
+S.dRes.push({exp:w.w,act:a,ok:a===w.w});S.dStep++;if(S.dStep>=DW.length)S.dPhase='report';R();
+const ni=document.getElementById('di');if(ni){ni.value='';ni.focus();}}
+
+function subRD(d){RI[S.rStep].df=d;S.rStep++;S.rPhase=S.rStep>=RI.length?'done':'q';R();}
+function mErr(id){const e=S.errors.find(x=>x.id===id);if(e){e.sk++;if(e.sk>=3)e.st='mastered';else e.st='reviewing';}R();}
+
+async function subOM(){const i=document.getElementById('omi'),a=i.value.trim();if(!a)return;const q=OMQ[S.omStep];
+try{const r=await post('/oral-math/judge',{expression:q.x,expectedAnswer:q.a,spokenText:a});
+S.omRes.push({x:q.x,ans:a,c:q.a,ok:r.isCorrect});showStatus(r.isCorrect?'正确！':'错误',r.isCorrect);
+}catch(e){S.omRes.push({x:q.x,ans:a,c:q.a,ok:false});showStatus('后端未连接',false);}
+S.omStep++;R();const ni=document.getElementById('omi');if(ni){ni.value='';ni.focus();}}
+
+async function startFocus(){
+try{const session=await post('/focus/start',{childId:'child-1',config:{focusMinutes:gcfg().foc,breakMinutes:2,totalRounds:3}});
+S.focusSessionId=session.sessionId;showStatus('专注会话已创建');
+}catch(e){showStatus('后端未连接，本地计时',false);}
+S.fPhase='run';S.fRound=1;S.fFocus=true;S.fSec=gcfg().foc*60;
+S.fTid=setInterval(()=>{S.fSec--;if(S.fSec<=0)skipFocus();R();},1000);R();}
+function skipFocus(){if(S.fFocus){S.fFocus=false;S.fSec=120;
+if(S.focusSessionId)post('/focus/complete-round',{sessionId:S.focusSessionId}).catch(()=>{});
+}else{S.fRound++;if(S.fRound>3){stopFocus();return;}S.fFocus=true;S.fSec=gcfg().foc*60;}R();}
+function stopFocus(){if(S.fTid)clearInterval(S.fTid);S.fTid=null;S.fPhase='ready';S.focusSessionId=null;R();}
+
+async function doWriteEval(){
+const n=70+Math.floor(Math.random()*25),a=60+Math.floor(Math.random()*35),sp=10+Math.floor(Math.random()*20);
+try{const r=await post('/focus/writing-eval',{neatnessRaw:n,correctCount:Math.round(a/10),totalCount:10,actualMinutes:sp,expectedMinutes:15});
+S.wEval={n:r.neatnessScore,a:r.accuracyScore,s:r.speedScore,o:r.overallScore};showStatus('评分: '+r.overallScore+'分');
+}catch(e){S.wEval={n,a,s:50,o:Math.round(n*.3+a*.5+50*.2)};showStatus('本地评分',false);}R();}
+
+async function doCheckin(){
+try{const r=await post('/habit/checkin',{childId:'child-1',date:new Date().toISOString()});
+S.streak=r.streak.currentStreak;S.hToday=true;document.getElementById('sd').textContent='🔥 连续'+S.streak+'天';
+showStatus('打卡成功！连续'+S.streak+'天');
+}catch(e){S.streak++;S.hToday=true;document.getElementById('sd').textContent='🔥 连续'+S.streak+'天';showStatus('本地打卡',false);}R();}
+
+async function loadCoachingScript(sit){S.pcSit=sit;
+try{const r=await get('/coaching/script/'+sit);COACH[sit]={sit:r.situation,wr:r.wrongApproach,ri:r.rightApproach,tips:r.tips,cat:r.category};
+}catch(e){}R();}
+
+async function switchGrade(g){S.grade=g;document.getElementById('gd').textContent='👧 小明 · '+g+'年级';
+try{await get('/grade/config/'+g);showStatus('学段配置已加载');}catch(e){}R();}
+
+async function genSummary(){
+try{const r=await post('/school/summary',{childId:'child-1',childName:'小明',date:new Date().toISOString(),
+oralResults:[{taskId:'oral-1',type:'oral',score:86,fluencyScore:82,accuracyScore:90,completedAt:new Date().toISOString()}],
+writtenResults:[{taskId:'written-1',type:'written',correctCount:8,totalCount:10,accuracy:80,completedAt:new Date().toISOString()}]});
+alert('📋 摘要:\n\n'+r.text);
+}catch(e){alert('后端未连接');}}
+
+async function createMultiWeek(templateId){
+try{
+  const r=await post('/multi-week/create',{childId:'child-1',templateId});
+  const phase=r.phases[0];
+  document.getElementById('multiWeekResult').innerHTML=`
+  <div class="cd"><div class="tt">✅ 计划已创建: ${r.title}</div>
+  <div style="font-size:13px;color:var(--g5)">总计${r.totalDays}天 · ${r.phases.length}个阶段</div>
+  <div class="pb"><div class="pf" style="width:${Math.round(1/r.totalDays*100)}%;background:var(--s)"></div></div>
+  ${r.phases.map((p,i)=>`<div style="padding:8px;border-bottom:1px solid var(--g1)">
+  <div style="display:flex;justify-content:space-between"><span style="font-weight:600">${p.name}</span><span class="b ${i===0?'b-p':'b'}" style="${i>0?'background:var(--g1);color:var(--g5)':''}">${i===0?'当前':'待开始'}</span></div>
+  <div style="font-size:12px;color:var(--g5)">${p.description}</div>
+  <div style="font-size:11px;color:var(--p);margin-top:4px">${p.durationDays}天 · 每日${p.dailyMinutes}分钟</div>
+  <div style="font-size:11px;margin-top:2px">${p.strategies.map(s=>'• '+s).join('<br>')}</div></div>`).join('')}</div>`;
+  showStatus('计划已创建: '+r.title);
+}catch(e){showStatus('后端未连接',false);}}
+
+async function loadMetaphors(grade){
+try{
+  const metaphors=await get('/metaphors/grade/'+grade);
+  document.getElementById('metaphorResult').innerHTML=metaphors.map(m=>
+  `<div class="cd"><div style="display:flex;justify-content:space-between;align-items:center">
+  <span style="font-weight:600;font-size:15px">${m.conceptName}</span>
+  <span class="b b-p">${m.gradeBand==='lower'?'低段':m.gradeBand==='middle'?'中段':'高段'}</span></div>
+  <div style="font-size:14px;margin:8px 0;padding:10px;background:var(--wl);border-radius:8px">💡 ${m.metaphor}</div>
+  <div style="font-size:12px;color:var(--g5)">${m.explanation}</div>
+  <div style="margin-top:8px"><div style="font-size:12px;font-weight:600;color:var(--p)">苏格拉底追问：</div>
+  ${m.followUpQuestions.map(q=>`<div style="font-size:12px;padding:2px 0">❓ ${q}</div>`).join('')}</div></div>`).join('');
+  showStatus('已加载'+metaphors.length+'个比喻');
+}catch(e){showStatus('后端未连接',false);}}
+
+async function loadCompanions(){
+try{
+  const companions=await get('/companion/all');
+  document.getElementById('companionResult').innerHTML=companions.map(c=>
+  `<div class="cd"><div style="display:flex;align-items:center;gap:10px">
+  <div style="font-size:28px">${c.name==='Leo'?'🦁':c.name==='Emma'?'👩‍🏫':c.name==='Alex'?'🧑‍🚀':'🎓'}</div>
+  <div style="flex:1"><div style="font-size:14px;font-weight:600">${c.name} <span class="b b-p">${c.correctionStyle}</span> <span class="b b-w">${c.vocabularyLevel}</span></div>
+  <div style="font-size:12px;color:var(--g5)">${c.age}岁 · ${c.nationality} · ${c.personality}</div>
+  <div style="font-size:12px;color:var(--p);margin-top:2px">"${c.openingLine}"</div>
+  <div style="font-size:11px;color:var(--g5);margin-top:2px">兴趣: ${c.interests.join(', ')}</div></div>
+  <button class="btn bsm bo" onclick="loadCompanionPrompt('${c.id}')">Prompt</button></div></div>`).join('');
+  showStatus('已从后端加载'+companions.length+'位语伴');
+}catch(e){showStatus('后端未连接',false);}}
+
+async function loadCompanionPrompt(companionId){
+try{
+  const r=await post('/companion/prompt',{companionId,childName:'小明',grade:S.grade});
+  alert('🤖 '+r.companion.name+' 的 System Prompt:\n\n'+r.prompt);
+  showStatus('Prompt已生成');
+}catch(e){showStatus('后端未连接',false);}}
+
+// ===== Feynman Enhanced Actions =====
+async function startFeynman(persona){
+const kp=document.getElementById('feynmanKP')?.value||'分数加法';
+if(!kp.trim()){showStatus('请输入知识点',false);return;}
+try{
+  const r=await post('/feynman/create',{childId:'child-1',knowledgePoint:kp,persona,childGrade:S.grade});
+  S.feynmanSession=r.session;showStatus('费曼会话已创建: '+r.openingLine.slice(0,20)+'...');
+}catch(e){
+  S.feynmanSession={sessionId:'local',childId:'child-1',knowledgePoint:kp,persona,currentPhase:'initial_explain',
+  exchanges:[{role:'ai_student',text:'你好！'+kp+'是什么呀？能教教我吗？',phase:'initial_explain'}],
+  gapsFound:[],phaseCompleted:{initial_explain:false,probing:false,deliberate_misunderstand:false,summary:false},isComplete:false};
+  showStatus('本地模式',false);}
+R();}
+
+async function submitFeynmanExplain(){
+const text=document.getElementById('feynmanInput')?.value;if(!text)return;
+try{
+  const r=await post('/feynman/explain',{sessionId:S.feynmanSession.sessionId,text});
+  S.feynmanSession=r.session;showStatus('AI学生回复了');
+}catch(e){
+  S.feynmanSession.exchanges.push({role:'child',text,phase:S.feynmanSession.currentPhase});
+  S.feynmanSession.exchanges.push({role:'ai_student',text:'嗯...我不太明白，能再解释一下吗？',phase:S.feynmanSession.currentPhase});
+  showStatus('本地模式',false);}
+R();}
+
+async function advanceFeynmanPhase(){
+try{
+  const r=await post('/feynman/advance-phase',{sessionId:S.feynmanSession.sessionId});
+  S.feynmanSession.currentPhase=r.newPhase;
+  S.feynmanSession.exchanges.push({role:'ai_student',text:r.message,phase:r.newPhase});
+  showStatus('进入阶段: '+r.newPhase);
+}catch(e){showStatus(e.message||'需要先完成当前阶段的交流',false);}
+R();}
+
+async function generateFeynmanMisunderstand(){
+try{
+  const r=await post('/feynman/misunderstand',{sessionId:S.feynmanSession.sessionId});
+  S.feynmanSession=r.session;showStatus('AI故意理解错了，纠正TA！');
+}catch(e){
+  S.feynmanSession.exchanges.push({role:'ai_student',text:'我知道了！'+S.feynmanSession.knowledgePoint+'就是随便来的对吧？',phase:'deliberate_misunderstand'});
+  showStatus('本地模式',false);}
+R();}
+
+async function submitFeynmanCorrection(){
+const text=document.getElementById('feynmanCorrect')?.value;if(!text)return;
+try{
+  const r=await post('/feynman/correct',{sessionId:S.feynmanSession.sessionId,text});
+  S.feynmanSession=r.session;showStatus('纠正已提交');
+}catch(e){
+  S.feynmanSession.exchanges.push({role:'child',text,phase:'deliberate_misunderstand'});
+  S.feynmanSession.exchanges.push({role:'ai_student',text:'哦！原来是这样，谢谢纠正！',phase:'deliberate_misunderstand'});
+  showStatus('本地模式',false);}
+R();}
+
+async function requestFeynmanSummary(){
+try{
+  const r=await post('/feynman/request-summary',{sessionId:S.feynmanSession.sessionId});
+  S.feynmanSession.currentPhase='summary';
+  S.feynmanSession.exchanges.push({role:'ai_student',text:r.message,phase:'summary'});
+  showStatus('请总结你教的内容');
+}catch(e){
+  S.feynmanSession.currentPhase='summary';
+  S.feynmanSession.exchanges.push({role:'ai_student',text:'你能帮我总结一下关键要点吗？',phase:'summary'});
+  showStatus('本地模式',false);}
+R();}
+
+async function submitFeynmanSummary(){
+const text=document.getElementById('feynmanSummary')?.value;if(!text)return;
+try{
+  const r=await post('/feynman/submit-summary',{sessionId:S.feynmanSession.sessionId,text});
+  S.feynmanSession=r.session;
+  showStatus('教学完成！总分: '+r.score.overall);
+  setTimeout(async()=>{
+    try{const sc=await get('/feynman/score/'+S.feynmanSession.sessionId);
+    document.getElementById('feynmanScore').innerHTML=`
+    <div class="sg"><div class="si"><div class="v" style="color:var(--p)">${sc.clarity}</div><div class="l">清晰度</div></div>
+    <div class="si"><div class="v" style="color:var(--s)">${sc.accuracy}</div><div class="l">准确性</div></div>
+    <div class="si"><div class="v" style="color:var(--w)">${sc.examples}</div><div class="l">举例</div></div>
+    <div class="si"><div class="v" style="color:var(--d)">${sc.correctionAbility}</div><div class="l">纠错</div></div></div>
+    <div style="text-align:center;margin:8px 0"><div style="font-size:32px;font-weight:700;color:var(--p)">${sc.overall}分</div></div>
+    <div class="nt ns" style="font-size:13px">${sc.feedback}</div>
+    ${S.feynmanSession.gapsFound.length?`<div class="cd" style="margin-top:8px"><div class="tt">🔍 发现的知识漏洞</div>
+    ${S.feynmanSession.gapsFound.map(g=>`<div class="nt nw" style="font-size:12px">${g}</div>`).join('')}</div>`:''}
+    <div class="bg"><button class="btn bp" onclick="S.feynmanSession=null;R()">再教一次</button></div>`;
+    }catch(e){}},500);
+}catch(e){
+  S.feynmanSession.isComplete=true;
+  showStatus('教学完成（本地模式）',false);}
+R();}
+
+// ===== Health Content Actions =====
+async function loadHealthContent(){
+try{
+  const r=await get('/health/all');
+  document.getElementById('healthContent').innerHTML=`
+  <div class="cd"><div class="tt">🧘 正确坐姿指导</div>
+  <div style="font-size:13px;font-weight:600;margin-bottom:6px">${r.posture.title}</div>
+  ${r.posture.steps.map((s,i)=>`<div style="padding:4px 0;font-size:13px">${i+1}. ${s}</div>`).join('')}
+  <div style="margin-top:8px;font-size:12px;color:var(--d)"><strong>常见错误：</strong>${r.posture.commonMistakes.join('、')}</div></div>
+  <div class="cd"><div class="tt">👁 护眼方法</div>
+  ${r.eyeCareMethods.map(m=>`<div style="padding:8px;border-bottom:1px solid var(--g1)">
+  <div style="font-size:14px;font-weight:600">${m.name} <span class="b b-p">${m.duration}</span></div>
+  <div style="font-size:12px;color:var(--g5)">${m.description}</div></div>`).join('')}</div>
+  <div class="cd"><div class="tt">🏋️ ${r.eyeExercise.name}</div>
+  <div style="font-size:12px;color:var(--g5);margin-bottom:8px">${r.eyeExercise.description}</div>
+  ${r.eyeExercise.sections.map(s=>`<div style="padding:8px;border-bottom:1px solid var(--g1)">
+  <div style="font-size:13px;font-weight:600">${s.name} <span class="b b-w">${s.duration}</span></div>
+  <div style="font-size:12px;color:var(--g5)">${s.instruction}</div></div>`).join('')}
+  <div class="bg"><button class="btn bsm bp" onclick="alert(document.querySelector('#healthVoice')?.textContent||'语音脚本加载中...')">🔊 播放语音引导</button></div>
+  <div id="healthVoice" style="display:none">${r.eyeExercise.voiceScript}</div></div>`;
+  showStatus('健康内容已加载');
+}catch(e){showStatus('后端未连接',false);}}
+
+// ===== Homework Management Actions =====
+async function addSampleHomework(){
+const today=new Date();const tomorrow=new Date(today);tomorrow.setDate(tomorrow.getDate()+1);
+const hws=[
+  {id:'hw-'+Date.now()+'-1',subject:'chinese',title:'朗读课文第5课',description:'大声朗读3遍',dueDate:tomorrow.toISOString(),estimatedMinutes:15,category:'oral',status:'pending'},
+  {id:'hw-'+Date.now()+'-2',subject:'math',title:'数学练习册P20',description:'完成全部习题',dueDate:tomorrow.toISOString(),estimatedMinutes:30,category:'written',status:'pending'},
+  {id:'hw-'+Date.now()+'-3',subject:'english',title:'英语单词听写',description:'Unit5单词',dueDate:today.toISOString(),estimatedMinutes:20,category:'written',status:'pending'},
+];
+for(const hw of hws){
+  try{await post('/homework/add',{childId:'child-1',...hw});}catch(e){}}
+showStatus('已添加3项示例作业');loadHomeworkPlan();}
+
+async function loadHomeworkPlan(){
+try{
+  const plan=await post('/homework/plan',{childId:'child-1'});
+  const stats=await get('/homework/stats/child-1');
+  document.getElementById('homeworkResult').innerHTML=`
+  <div class="cd"><div class="tt">📋 今日作业计划</div>
+  <div style="font-size:12px;color:var(--g5)">共${plan.items.length}项 · 预计${plan.totalEstimatedMinutes}分钟</div>
+  ${plan.items.map(it=>`<div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;background:${it.priority==='high'?'var(--dl)':it.priority==='medium'?'var(--wl)':'var(--g50)'};margin-top:6px">
+  <span style="font-size:16px">${it.scheduledSlot==='morning'?'🌅':it.scheduledSlot==='afternoon'?'☀️':'🌙'}</span>
+  <div style="flex:1"><div style="font-size:13px;font-weight:600">${it.homeworkId.slice(-6)}</div>
+  <div style="font-size:11px;color:var(--g5)">${it.scheduledSlot} · ${it.estimatedMinutes}分钟</div></div>
+  <span class="b ${it.priority==='high'?'b-d':it.priority==='medium'?'b-w':'b-s'}">${it.priority}</span></div>`).join('')}
+  <div style="margin-top:8px;font-size:12px;color:var(--g5)">💡 ${plan.items[0]?.aiTip||'加油完成作业！'}</div></div>
+  <div class="cd"><div class="tt">📊 完成统计</div>
+  <div class="sg"><div class="si"><div class="v">${stats.total}</div><div class="l">总数</div></div>
+  <div class="si"><div class="v" style="color:var(--s)">${Math.round(stats.completionRate*100)}%</div><div class="l">完成率</div></div></div></div>`;
+}catch(e){document.getElementById('homeworkResult').innerHTML='<div class="nt ni">点击上方按钮添加示例作业</div>';}}
+
+
+async function doPreview(mat){
+document.getElementById('previewResult').innerHTML='<div class="cd" style="text-align:center;padding:20px">⏳ 生成预习方案...</div>';
+try{const r=await post('/preview/generate',mat);const o=r.overview,qs=r.questions,obs=r.obstacles;
+document.getElementById('previewResult').innerHTML=`
+<div class="cd"><div class="tt">📋 重点速览</div><div class="msg mai"><div class="ml">🤖 AI</div>${o.summary}</div>
+<div style="margin-top:8px">${o.keyPoints.map(k=>`<span class="b b-p" style="margin:2px">${k}</span>`).join('')}</div></div>
+<div class="cd"><div class="tt">❓ 引导问题</div>
+${qs.map((q,i)=>`<div style="padding:6px 0;border-bottom:1px solid var(--g1);font-size:13px"><strong>${i+1}.</strong> ${q.question} <span class="b b-p">${q.bloomLevel}</span></div>`).join('')}</div>
+<div class="cd"><div class="tt">🚧 障碍清除</div>
+${obs.map(o=>`<div style="padding:6px 0;border-bottom:1px solid var(--g1);font-size:13px"><strong>${o.term}</strong> — ${o.explanation}</div>`).join('')}</div>`;
+showStatus('预习方案已生成');
+}catch(e){document.getElementById('previewResult').innerHTML='<div class="nt nd">后端未连接</div>';}}
+async function startFiveStep(){
+S.fsWords=[{character:'花',pinyin:'huā',meaning:'花朵',radicalExplanation:'艹表示植物',exampleSentence:'花园里开满了花。',strokeCount:7},
+{character:'鸟',pinyin:'niǎo',meaning:'鸟类',radicalExplanation:'象形字',exampleSentence:'树上有一只小鸟。',strokeCount:5}];
+try{const r=await post('/five-step/create',{sessionId:'fs-'+Date.now(),childId:'child-1',childGrade:S.grade,words:S.fsWords});
+S.fsSession=r;showStatus('五步法会话已创建');
+}catch(e){S.fsSession={sessionId:'local',childId:'child-1',childGrade:S.grade,currentWordIndex:0,currentStep:'recognize',totalWords:2,completedWords:0,isComplete:false};showStatus('本地模式',false);}R();}
+
+async function doFsRecognize(){
+try{const r=await post('/five-step/recognize',{sessionId:S.fsSession.sessionId});
+document.getElementById('recogResult').innerHTML=`<div class="ml">🤖 AI</div><strong>故事：</strong>${r.storyExplanation}<br><strong>偏旁：</strong>${r.radicalBreakdown}`;
+S.fsSession.currentStep='read';setTimeout(R,1500);
+}catch(e){S.fsSession.currentStep='read';R();}}
+
+async function doFsRead(score,tone){
+try{const r=await post('/five-step/read',{sessionId:S.fsSession.sessionId,pronunciationScore:score,toneAccuracy:tone});
+if(r.needsRetry)showStatus('发音'+score+'分，未达70分',false);
+else{S.fsSession.currentStep='write';setTimeout(R,800);}
+}catch(e){if(score>=70){S.fsSession.currentStep='write';R();}else showStatus('需重试',false);}}
+
+async function doFsWrite(correct,score){
+try{await post('/five-step/write',{sessionId:S.fsSession.sessionId,strokeCorrect:correct,structureScore:score});
+S.fsSession.currentStep='use';setTimeout(R,800);
+}catch(e){S.fsSession.currentStep='use';R();}}
+
+async function doFsUse(){
+const sentence=document.getElementById('fsSentence')?.value||'';if(!sentence)return;
+try{const r=await post('/five-step/use',{sessionId:S.fsSession.sessionId,sentence});
+document.getElementById('useResult').innerHTML=`<div class="nt ${r.isValid?'ns':'nd'}" style="margin-top:8px">${r.feedback}</div>`;
+if(r.isValid){S.fsSession.currentStep='test';setTimeout(R,1200);}
+}catch(e){S.fsSession.currentStep='test';R();}}
+
+async function doFsTest(){
+const ans=document.getElementById('fsDictation')?.value||'';if(!ans)return;
+const w=S.fsWords[S.fsSession.currentWordIndex];
+try{const r=await post('/five-step/test',{sessionId:S.fsSession.sessionId,dictationAnswer:ans,quizAnswer:ans===w.character});
+document.getElementById('testResult').innerHTML=`<div class="nt ${r.overallMastered?'ns':'nw'}" style="margin-top:8px">${r.overallMastered?'🎉 掌握！':'需要继续练习'}</div>`;
+try{const adv=await post('/five-step/advance',{sessionId:S.fsSession.sessionId});S.fsSession=adv;
+if(adv.isComplete){setTimeout(async()=>{try{const rpt=await get('/five-step/report/'+S.fsSession.sessionId);
+document.getElementById('fsReport').innerHTML=`<div class="sg"><div class="si"><div class="v" style="color:var(--s)">${rpt.masteryRate}%</div><div class="l">掌握率</div></div>
+<div class="si"><div class="v">${rpt.masteredCount}/${rpt.totalWords}</div><div class="l">掌握数</div></div></div>
+<div class="bg"><button class="btn bp" onclick="S.fsSession=null;R()">返回</button></div>`;}catch(e){}},500);}
+else setTimeout(R,1500);}catch(e){}
+}catch(e){showStatus('后端未连接',false);}}
+
+async function doMultiSol(prob){
+document.getElementById('multiSolResult').innerHTML='<div class="cd" style="text-align:center;padding:20px">⏳ 生成多种解法...</div>';
+try{const r=await post('/multi-solution/generate',{problem:prob,childGrade:S.grade});const sols=r.solutions;
+document.getElementById('multiSolResult').innerHTML=`
+<div class="cd"><div class="tt">📝 ${prob.content.slice(0,25)}...</div>
+<div style="font-size:12px;color:var(--g5)">推荐: <span class="b b-p">${sols.find(s=>s.id===r.recommendedMethod)?.name||r.recommendedMethod}</span></div></div>
+${sols.map(s=>`<div class="cd"><div class="tt">${s.name} <span class="b ${s.difficulty<=2?'b-s':s.difficulty<=3?'b-w':'b-d'}">难度${s.difficulty}</span></div>
+${s.steps.map(st=>`<div style="padding:4px 0 4px 16px;font-size:13px;border-left:2px solid var(--p)">
+<strong>步骤${st.stepNumber}:</strong> ${st.description}${st.expression?` <code style="background:var(--pl);padding:2px 6px;border-radius:4px">${st.expression}</code>`:''}</div>`).join('')}
+<div style="margin-top:6px;font-size:12px"><span style="color:var(--s)">✓ ${s.pros.join(' · ')}</span> | <span style="color:var(--d)">✗ ${s.cons.join(' · ')}</span></div></div>`).join('')}
+<div class="cd"><div class="tt">💡 洞察</div><div class="msg mai"><div class="ml">🤖 AI</div>${r.insight}</div></div>`;
+showStatus('多解方案已生成');
+}catch(e){document.getElementById('multiSolResult').innerHTML='<div class="nt nd">后端未连接</div>';}}
+
+// ===== RENDER ENGINE =====
+const RR={home:rHome,preview:rPreview,chinese:rChinese,math:rMath,english:rEnglish,manage:rManage,profile:rProfile,parent:rParent};
+function R(){document.getElementById('ct').innerHTML=RR[S.tab]();document.getElementById('ct').scrollTop=0;}
+document.getElementById('tabs').addEventListener('click',e=>{const t=e.target.closest('.tab');if(!t)return;
+document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');S.tab=t.dataset.t;R();});
+R();
+</script>
+</body>
+</html>
