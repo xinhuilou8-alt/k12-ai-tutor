@@ -75,6 +75,10 @@ const previewService = new PreviewService();
 const homeworkMgr = new HomeworkManager();
 const feynmanEnhanced = new EnhancedFeynmanModule();
 
+// ── Seed realistic data ──
+import { seedAllData } from './seed-data';
+seedAllData(homeworkMgr, oralService);
+
 // ════════════════════════════════════════
 // 1. 作业分类
 // ════════════════════════════════════════
