@@ -32,7 +32,16 @@ export interface ASRConfig {
 }
 
 export interface TTSConfig {
-  provider: 'baidu_tts' | 'tencent_tts' | 'mock';
+  provider: 'volcano' | 'baidu_tts' | 'tencent_tts' | 'mock';
+  volcano?: {
+    endpoint: string;
+    token: string;
+    appid: string;
+    cluster: string;
+    voiceType: string;
+    speedRatio: number;
+    audioFormat: string;
+  };
   baiduTts?: { appId: string; apiKey: string; secretKey: string };
 }
 
@@ -132,6 +141,15 @@ export function loadAIConfig(): AIConfig {
     },
     tts: {
       provider: (env.TTS_PROVIDER as TTSConfig['provider']) || 'mock',
+      volcano: env.VOLCANO_TTS_TOKEN ? {
+        endpoint: env.VOLCANO_TTS_ENDPOINT || 'https://openspeech.bytedance.com/api/v1/tts',
+        token: env.VOLCANO_TTS_TOKEN,
+        appid: env.VOLCANO_TTS_APPID || '',
+        cluster: env.VOLCANO_TTS_CLUSTER || 'volcano_tts',
+        voiceType: env.VOLCANO_TTS_VOICE_TYPE || 'zh_female_yingyujiaoxue_uranus_bigtts',
+        speedRatio: parseFloat(env.VOLCANO_TTS_SPEED_RATIO || '1.0'),
+        audioFormat: env.VOLCANO_TTS_AUDIO_FORMAT || 'mp3',
+      } : undefined,
       baiduTts: env.BAIDU_TTS_APP_ID ? {
         appId: env.BAIDU_TTS_APP_ID,
         apiKey: env.BAIDU_TTS_API_KEY || '',
@@ -157,5 +175,6 @@ export function printAIConfigStatus(config: AIConfig): void {
   console.log(`  OCR:  ${config.ocr.provider} ${config.ocr.provider !== 'mock' ? '✅' : '⚠️ Mock模式'}`);
   console.log(`  ASR:  ${config.asr.provider} ${config.asr.provider !== 'mock' ? '✅' : '⚠️ Mock模式'}`);
   console.log(`  TTS:  ${config.tts.provider} ${config.tts.provider !== 'mock' ? '✅' : '⚠️ Mock模式'}`);
+  if (config.tts.volcano) console.log(`        火山引擎 Voice: ${config.tts.volcano.voiceType} AppID: ${config.tts.volcano.appid}`);
   console.log('  ─────────────────\n');
 }

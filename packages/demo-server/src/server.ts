@@ -54,6 +54,9 @@ import { getPostureGuide, getEyeCareMethods, getEyeExercise, getHealthContent } 
 import { HomeworkManager } from '../../homework-orchestrator/src/homework-manager';
 import { EnhancedFeynmanModule } from '../../feynman-engine/src/feynman-enhanced';
 
+// ── Volcano TTS ──
+import { volcanoSynthesize } from '../../tts-engine/src/providers/volcano-provider';
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -446,6 +449,28 @@ app.get('/api/health/posture', (_req, res) => res.json(getPostureGuide()));
 app.get('/api/health/eye-care', (_req, res) => res.json(getEyeCareMethods()));
 app.get('/api/health/eye-exercise', (_req, res) => res.json(getEyeExercise()));
 app.get('/api/health/all', (_req, res) => res.json(getHealthContent()));
+
+// ════════════════════════════════════════
+// TTS 语音合成 API
+// ════════════════════════════════════════
+app.post('/api/tts/synthesize', async (req, res) => {
+  const { text, speed } = req.body;
+  if (!text) return res.status(400).json({ error: 'text is required' });
+
+  if (aiConfig.tts.provider === 'volcano' && aiConfig.tts.volcano) {
+    try {
+      const cfg = { ...aiConfig.tts.volcano };
+      if (speed) cfg.speedRatio = speed;
+      const result = await volcanoSynthesize(text, cfg);
+      res.json({ provider: 'volcano', audio: result.audioBase64, format: result.audioFormat });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message, provider: 'volcano' });
+    }
+  } else {
+    // Mock: return empty audio
+    res.json({ provider: 'mock', audio: '', format: 'mp3', message: 'TTS is in mock mode' });
+  }
+});
 
 // ════════════════════════════════════════
 // 19. 作业管理 (REQ-003)
