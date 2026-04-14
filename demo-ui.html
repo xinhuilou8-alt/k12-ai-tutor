@@ -78,6 +78,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
   <div class="tabs" id="tabs">
     <div class="tab active" data-t="home">🏠首页</div>
+    <div class="tab" data-t="mvpreport">📊报告</div>
     <div class="tab" data-t="preview">📚预习</div>
     <div class="tab" data-t="chinese">📖语文</div>
     <div class="tab" data-t="math">🔢数学</div>
@@ -142,6 +143,35 @@ ${t.st==='done'?'<span class="b b-s">✓完成</span>':t.st==='cur'?'<span class
 <div id="homeworkResult"><div class="cd" style="text-align:center;color:var(--g5);padding:20px">⏳ 加载作业计划中...</div></div>
 <div class="cd"><div class="tt">🏆 成就徽章</div><div style="display:flex;gap:12px;flex-wrap:wrap">
 ${S.ach.map(a=>`<div style="text-align:center;opacity:${a.e?1:.3}"><div style="font-size:28px">${a.i}</div><div style="font-size:11px;color:var(--g5)">${a.n}</div></div>`).join('')}</div></div>`;
+}
+
+// ===== MVP-学情报告Page =====
+function rMvpReport(){
+return `<div class="cd" style="background:linear-gradient(135deg,#EEF2FF,#F5F3FF);border:none;text-align:center;padding:16px">
+<div style="font-size:22px">📊</div>
+<div style="font-size:16px;font-weight:700">MVP-学情报告Page</div>
+<div style="font-size:12px;color:var(--g5);margin-top:4px">学情快照 + 作业摘要 · 家长一站式查看</div></div>
+
+<div class="cd"><div class="tt">📅 今日学习快照</div>
+<div style="font-size:13px;color:var(--g5);margin-bottom:8px">实时更新，1屏看完孩子今天的学习情况</div>
+<div class="bg"><button class="btn bp" onclick="loadMvpDaily()">📅 查看今日快照</button></div></div>
+<div id="mvpDailyResult"></div>
+
+<div class="cd"><div class="tt">📊 本周学情报告</div>
+<div style="font-size:13px;color:var(--g5);margin-bottom:8px">全科总览 + 分学科明细 + 下周规划</div>
+<div class="bg"><button class="btn bp" onclick="loadMvpWeekly()">📊 生成周报告</button></div></div>
+<div id="mvpWeeklyResult"></div>
+
+<div class="cd"><div class="tt">📋 作业完成摘要</div>
+<div style="font-size:13px;color:var(--g5);margin-bottom:8px">一键生成，可分享给老师</div>
+<div class="bg"><button class="btn bp" onclick="loadMvpSummary()">📋 生成摘要</button>
+<button class="btn bo" onclick="shareMvpSummary()">🔗 分享</button></div></div>
+<div id="mvpSummaryResult"></div>
+
+<div class="cd"><div class="tt">⚠️ 异常行为检测</div>
+<div style="font-size:13px;color:var(--g5);margin-bottom:8px">自动检测秒搜、深夜学习、未订正等异常</div>
+<div class="bg"><button class="btn bo" onclick="loadMvpAnomalies()">🔍 检测异常</button></div></div>
+<div id="mvpAnomalyResult"></div>`;
 }
 
 // ===== TAB 2: PREVIEW =====
@@ -787,6 +817,111 @@ try{
 R();}
 
 // ===== Report Actions =====
+
+// MVP Report Page actions
+async function loadMvpDaily(){
+const today=new Date().toISOString().slice(0,10);
+try{
+  const r=await get('/report/daily/xiaoming/'+today);
+  if(!r.hasData){document.getElementById('mvpDailyResult').innerHTML='<div class="cd" style="text-align:center;color:var(--g5);padding:20px">📅 今日暂无学习数据</div>';return;}
+  document.getElementById('mvpDailyResult').innerHTML=`
+  <div class="cd"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+  <div style="font-size:14px;font-weight:600">📅 ${r.date}</div>
+  <span class="b b-s">已学习</span></div>
+  <div class="sg3"><div class="si"><div class="v">${r.totalMinutes}</div><div class="l">分钟</div></div>
+  <div class="si"><div class="v">${r.totalQuestions}</div><div class="l">道题</div></div>
+  <div class="si"><div class="v" style="color:${r.overallAccuracy>=80?'var(--s)':r.overallAccuracy>=60?'var(--w)':'var(--d)'}">${r.overallAccuracy}%</div><div class="l">正确率</div></div></div>
+  <div style="margin-top:12px">${r.completedTasks.map(t=>{
+    const icon=t.subject==='chinese'?'📖':t.subject==='math'?'🔢':'🌍';
+    const acc=t.accuracy!==undefined?`<span class="b ${t.accuracy>=80?'b-s':t.accuracy>=60?'b-w':'b-d'}">${t.accuracy}%</span>`:'';
+    const sc=t.score?`<span class="b b-p">${t.score}分</span>`:'';
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid var(--g1)">
+    <span style="font-size:16px">${icon}</span>
+    <div style="flex:1;font-size:13px">${t.title}</div>${acc}${sc}</div>`;}).join('')}</div>
+  ${r.dailyHighlight?`<div style="margin-top:12px;padding:10px;background:var(--sl);border-radius:8px;font-size:13px;color:#065F46">💡 ${r.dailyHighlight}</div>`:''}</div>`;
+  showStatus('今日快照已生成');
+}catch(e){document.getElementById('mvpDailyResult').innerHTML='<div class="nt nw">后端未连接</div>';}}
+
+async function loadMvpWeekly(){
+document.getElementById('mvpWeeklyResult').innerHTML='<div class="cd" style="text-align:center;padding:20px;color:var(--g5)">⏳ 生成周报告中...</div>';
+try{
+  const r=await post('/report/weekly',{childId:'xiaoming',childName:'小明',gradeBand:gband()});
+  const o=r.overview,subs=r.subjects,plan=r.plan;
+  document.getElementById('mvpWeeklyResult').innerHTML=`
+  <div class="cd"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+  <div style="font-size:14px;font-weight:600">📊 第${r.weekNumber}周报告</div>
+  <span style="font-size:11px;color:var(--g5)">${r.dateRange.start} ~ ${r.dateRange.end}</span></div>
+  <div class="sg3">
+  <div class="si"><div class="v">${o.completionRate}%</div><div class="l">完成率${o.completionRateDelta>0?' ↑'+o.completionRateDelta:o.completionRateDelta<0?' ↓'+Math.abs(o.completionRateDelta):''}</div></div>
+  <div class="si"><div class="v">${o.dailyAvgMinutes}</div><div class="l">日均(分)</div></div>
+  <div class="si"><div class="v" style="color:${o.overallAccuracy>=80?'var(--s)':'var(--w)'}">${o.overallAccuracy}%</div><div class="l">正确率${o.accuracyDelta>0?' ↑'+o.accuracyDelta:o.accuracyDelta<0?' ↓'+Math.abs(o.accuracyDelta):''}</div></div></div>
+  <div style="display:flex;flex-wrap:wrap;gap:6px;margin:10px 0">${o.behaviorTags.map(t=>`<span class="b ${t.type==='positive'?'b-s':'b-d'}">${t.type==='positive'?'✅':'⚠️'} ${t.text}</span>`).join('')}</div></div>
+
+  ${o.weakPointsTop3.length?`<div class="cd"><div class="tt" style="color:var(--d)">🔴 薄弱知识点</div>
+  ${o.weakPointsTop3.map((w,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid var(--g1)">
+  <span style="font-size:16px;font-weight:700;color:var(--d)">${i+1}</span>
+  <div style="flex:1"><div style="font-size:13px;font-weight:600">${w.subject==='chinese'?'语文':w.subject==='math'?'数学':'英语'} · ${w.point}</div>
+  <div style="font-size:11px;color:var(--g5)">${w.detail}</div></div></div>`).join('')}</div>`:''}
+
+  ${o.progressHighlights.length?`<div class="cd"><div class="tt" style="color:var(--s)">📈 本周进步</div>
+  ${o.progressHighlights.map(h=>`<div style="padding:6px 0;font-size:13px;color:#065F46">🌟 ${h}</div>`).join('')}</div>`:''}
+
+  ${subs.map(s=>`<div class="cd"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+  <div class="tt" style="margin-bottom:0">${s.subject==='chinese'?'📖':s.subject==='math'?'🔢':'🌍'} ${s.subjectLabel}</div>
+  <span class="b ${s.accuracy>=80?'b-s':s.accuracy>=60?'b-w':'b-d'}">${s.accuracy}%</span></div>
+  <div style="font-size:12px;color:var(--g5)">错题${s.totalErrors}道 · 主因: <span class="b b-w">${s.dominantErrorCause}</span></div>
+  ${s.weakPoints.length?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin:6px 0">${s.weakPoints.map(w=>`<span class="b b-d" style="font-size:11px">${w}</span>`).join('')}</div>`:''}
+  ${s.dictationAccuracy!==undefined?`<div style="font-size:12px;margin-top:4px">📝 听写: ${s.dictationAccuracy}%</div>`:''}
+  ${s.recitationScore!==undefined?`<div style="font-size:12px">🎤 背诵: ${s.recitationScore}分</div>`:''}
+  <div style="font-size:12px;color:var(--p);margin-top:6px;padding:8px;background:var(--pl);border-radius:6px">💊 ${s.remediation}</div></div>`).join('')}
+
+  <div class="cd" style="border:2px solid var(--p)"><div class="tt" style="color:var(--p)">🎯 下周规划</div>
+  <div style="font-size:14px;font-weight:600;margin-bottom:8px">${plan.coreGoal}</div>
+  <div style="font-size:12px;color:var(--g5);margin-bottom:10px">每日约${plan.totalDailyMinutes}分钟 · ${plan.tasks.length}项任务</div>
+  ${plan.tasks.map((t,i)=>`<div style="padding:10px;background:${i%2===0?'var(--g50)':'#fff'};border-radius:8px;margin-bottom:6px">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+  <div style="font-size:13px;font-weight:600">${i+1}. ${t.title}</div>
+  <span class="b b-p">${t.frequency} · ${t.duration}</span></div>
+  <div style="font-size:12px;color:var(--g5);margin-top:4px">${t.description}</div>
+  <div style="font-size:11px;color:var(--p);margin-top:4px">📍 ${t.appEntry}${t.targetMetric?' · 🎯 '+t.targetMetric:''}</div></div>`).join('')}</div>`;
+  showStatus('周报告已生成');
+}catch(e){document.getElementById('mvpWeeklyResult').innerHTML='<div class="nt nw">后端未连接</div>';}}
+
+async function loadMvpSummary(){
+try{
+  const r=await post('/school/summary',{childId:'xiaoming',childName:'小明',date:new Date().toISOString(),
+    oralResults:[
+      {taskId:'oral-read',type:'oral',score:88,fluencyScore:85,accuracyScore:90,completedAt:new Date().toISOString()},
+      {taskId:'oral-recite',type:'oral',score:90,fluencyScore:88,accuracyScore:92,completedAt:new Date().toISOString()}],
+    writtenResults:[
+      {taskId:'math-calc',type:'written',correctCount:16,totalCount:20,accuracy:80,completedAt:new Date().toISOString()},
+      {taskId:'cn-dictation',type:'written',correctCount:9,totalCount:10,accuracy:90,completedAt:new Date().toISOString()},
+      {taskId:'en-spell',type:'written',correctCount:8,totalCount:10,accuracy:80,completedAt:new Date().toISOString()}]});
+  document.getElementById('mvpSummaryResult').innerHTML=`
+  <div class="cd"><div style="padding:12px;background:var(--g50);border-radius:8px;font-size:13px;line-height:2;white-space:pre-wrap">${r.text}</div>
+  <div style="margin-top:8px;font-size:11px;color:var(--g5)">🔗 ${r.summary.shareableLink}</div></div>`;
+  showStatus('摘要已生成');
+}catch(e){document.getElementById('mvpSummaryResult').innerHTML='<div class="nt nw">后端未连接</div>';}}
+
+async function shareMvpSummary(){
+try{
+  const r=await post('/school/summary',{childId:'xiaoming',childName:'小明',date:new Date().toISOString(),
+    oralResults:[{taskId:'o1',type:'oral',score:88,fluencyScore:85,accuracyScore:90,completedAt:new Date().toISOString()}],
+    writtenResults:[{taskId:'w1',type:'written',correctCount:16,totalCount:20,accuracy:80,completedAt:new Date().toISOString()}]});
+  if(navigator.clipboard){await navigator.clipboard.writeText(r.text);showStatus('摘要已复制到剪贴板，可粘贴分享');}
+  else alert(r.text);
+}catch(e){showStatus('后端未连接',false);}}
+
+async function loadMvpAnomalies(){
+try{
+  const alerts=await get('/report/anomalies/xiaoming');
+  if(alerts.length===0){document.getElementById('mvpAnomalyResult').innerHTML='<div class="nt ns" style="font-size:13px">✅ 未检测到异常行为，学习习惯良好！</div>';showStatus('无异常');return;}
+  document.getElementById('mvpAnomalyResult').innerHTML=alerts.map(a=>`<div class="nt ${a.severity==='warning'?'nd':'nw'}" style="font-size:13px">
+  ${a.type==='bulk_search'?'🚨':a.type==='late_night'?'🌙':'📝'} ${a.message}</div>`).join('');
+  showStatus('检测到'+alerts.length+'条异常');
+}catch(e){document.getElementById('mvpAnomalyResult').innerHTML='<div class="nt nw">后端未连接</div>';}}
+
+// Parent tab report actions (kept for backward compat)
 async function loadDailyReport(){
 const today=new Date().toISOString().slice(0,10);
 try{
@@ -965,7 +1100,7 @@ showStatus('多解方案已生成');
 }catch(e){document.getElementById('multiSolResult').innerHTML='<div class="nt nd">后端未连接</div>';}}
 
 // ===== RENDER ENGINE =====
-const RR={home:rHome,preview:rPreview,chinese:rChinese,math:rMath,english:rEnglish,manage:rManage,profile:rProfile,parent:rParent};
+const RR={home:rHome,mvpreport:rMvpReport,preview:rPreview,chinese:rChinese,math:rMath,english:rEnglish,manage:rManage,profile:rProfile,parent:rParent};
 function R(){document.getElementById('ct').innerHTML=RR[S.tab]();document.getElementById('ct').scrollTop=0;}
 document.getElementById('tabs').addEventListener('click',e=>{const t=e.target.closest('.tab');if(!t)return;
 document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');S.tab=t.dataset.t;R();});
