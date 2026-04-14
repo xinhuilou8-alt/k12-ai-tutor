@@ -898,16 +898,39 @@ try{
   const errMap={};
   subs.forEach(s=>(s.errorDistribution||[]).forEach(e=>{errMap[e.type]=(errMap[e.type]||0)+e.count;}));
   const topErrors=Object.entries(errMap).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const totalErrors=subs.reduce((s,sub)=>s+sub.totalErrors,0);
+
+  // 错题清单：按学科汇总
+  const errorList=subs.filter(s=>s.totalErrors>0).map(s=>({
+    subject:s.subjectLabel,
+    icon:s.subject==='chinese'?'📖':s.subject==='math'?'🔢':'🌍',
+    errors:s.totalErrors,
+    weakPoints:s.weakPoints.slice(0,3),
+    cause:s.dominantErrorCause,
+    dist:(s.errorDistribution||[]).slice(0,3)
+  }));
 
   document.getElementById('mvpWeeklyResult').innerHTML=`
   <div class="cd"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
   <div style="font-size:14px;font-weight:600">📊 第${r.weekNumber}周报告</div>
   <span style="font-size:11px;color:var(--g5)">${r.dateRange.start} ~ ${r.dateRange.end}</span></div>
-  <div class="sg3">
-  <div class="si"><div class="v">${o.completionRate}%</div><div class="l">完成率${o.completionRateDelta>0?' ↑'+o.completionRateDelta:o.completionRateDelta<0?' ↓'+Math.abs(o.completionRateDelta):''}</div></div>
-  <div class="si"><div class="v">${o.dailyAvgMinutes}</div><div class="l">日均(分)</div></div>
-  <div class="si"><div class="v" style="color:${o.overallAccuracy>=80?'var(--s)':'var(--w)'}">${o.overallAccuracy}%</div><div class="l">正确率${o.accuracyDelta>0?' ↑'+o.accuracyDelta:o.accuracyDelta<0?' ↓'+Math.abs(o.accuracyDelta):''}</div></div></div>
+  <div style="display:flex;gap:8px;text-align:center">
+  <div style="flex:1;padding:10px;background:var(--g50);border-radius:10px"><div style="font-size:20px;font-weight:700;color:var(--p)">${o.completionRate}%</div><div style="font-size:11px;color:var(--g5)">完成率${o.completionRateDelta>0?' ↑'+o.completionRateDelta:o.completionRateDelta<0?' ↓'+Math.abs(o.completionRateDelta):''}</div></div>
+  <div style="flex:1;padding:10px;background:var(--g50);border-radius:10px"><div style="font-size:20px;font-weight:700">${o.dailyAvgMinutes}</div><div style="font-size:11px;color:var(--g5)">日均(分钟)</div></div>
+  <div style="flex:1;padding:10px;background:var(--g50);border-radius:10px"><div style="font-size:20px;font-weight:700;color:${o.overallAccuracy>=80?'var(--s)':'var(--w)'}">${o.overallAccuracy}%</div><div style="font-size:11px;color:var(--g5)">正确率${o.accuracyDelta>0?' ↑'+o.accuracyDelta:o.accuracyDelta<0?' ↓'+Math.abs(o.accuracyDelta):''}</div></div>
+  <div style="flex:1;padding:10px;background:${totalErrors>0?'#FEF2F2':'var(--g50)'};border-radius:10px"><div style="font-size:20px;font-weight:700;color:var(--d)">${totalErrors}</div><div style="font-size:11px;color:var(--g5)">错题数</div></div></div>
   <div style="display:flex;flex-wrap:wrap;gap:6px;margin:10px 0">${o.behaviorTags.map(t=>`<span class="b ${t.type==='positive'?'b-s':'b-d'}">${t.type==='positive'?'✅':'⚠️'} ${t.text}</span>`).join('')}</div></div>
+
+  ${totalErrors>0?`<div class="cd"><div class="tt" style="color:var(--d)">📝 错题清单</div>
+  <div style="display:flex;gap:10px">${errorList.map(e=>`<div style="flex:1;padding:10px;background:var(--g50);border-radius:10px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+  <span style="font-size:13px;font-weight:600">${e.icon} ${e.subject}</span>
+  <span class="b b-d">${e.errors}题</span></div>
+  <div style="font-size:11px;color:var(--g5);margin-bottom:4px">主因: ${e.cause}</div>
+  ${e.dist.map(d=>`<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0">
+  <span>${d.type}</span><span style="color:var(--d)">${d.count}次</span></div>`).join('')}
+  ${e.weakPoints.length?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:4px">${e.weakPoints.map(w=>`<span class="b b-d" style="font-size:10px">${w}</span>`).join('')}</div>`:''}
+  </div>`).join('')}</div></div>`:''}
 
   ${o.progressHighlights.length?`<div class="cd" style="background:linear-gradient(135deg,#ECFDF5,#F0FDF4);border:1px solid #BBF7D0"><div class="tt" style="color:#065F46">📈 本周进步</div>
   ${o.progressHighlights.map(h=>`<div style="padding:6px 0;font-size:13px;color:#065F46">🌟 ${h}</div>`).join('')}</div>`:''}
