@@ -80,7 +80,7 @@ export class InsightEngine {
       }
     }
 
-    // 1. 今日出错的知识点，历史上也出过错 → 重复犯错
+    // 1. 今日出错的知识点，历史上也出过错 → 重复犯错提醒
     const todayErrorKPs = new Set<string>();
     for (const ev of todayEvents) {
       if (ev.metrics.errorTypes && ev.metrics.errorTypes.length > 0 && ev.metrics.knowledgePoints) {
@@ -89,19 +89,74 @@ export class InsightEngine {
     }
     if (todayErrorKPs.size > 0) {
       const recurring = this.detectRecurringErrors(allEvents, currentDate);
-      // 只保留今日也出错的知识点
       insights.push(...recurring.filter(r => todayErrorKPs.has(r.knowledgePoint)));
     }
 
-    // 2. 今日涉及学科的阶段性进步
-    const progress = this.detectMilestoneProgress(allEvents, currentDate);
-    insights.push(...progress.filter(p => todaySubjects.has(p.subject)));
+    // 2. 今日全对的知识点，历史上曾出过错 → 进步表扬
+    const todayPerfectKPs = this.detectTodayPerfectKPs(todayEvents, allEvents, currentDate);
+    insights.push(...todayPerfectKPs);
 
     // 3. 今日知识点与历史的关联
     const links = this.detectKnowledgeLinks(allEvents, currentDate);
     insights.push(...links.filter(l => todayKPs.has(l.knowledgePoint)));
 
-    return this.sortAndLimit(insights, maxInsights);
+    // 排序：进步表扬优先 > 关联 > 重复犯错
+    const priority: Record<string, number> = {
+      milestone_progress: 0,
+      knowledge_link: 1,
+      recurring_error: 2,
+    };
+    insights.sort((a, b) => priority[a.category] - priority[b.category]);
+    return insights.slice(0, maxInsights);
+  }
+
+  /**
+   * 检测今日全对但历史上曾出错的知识点 → 生成进步表扬
+   */
+  private detectTodayPerfectKPs(
+    todayEvents: LearningEvent[],
+    allEvents: LearningEvent[],
+    now: Date,
+  ): MemoryInsight[] {
+    const insights: MemoryInsight[] = [];
+
+    // 今日有成绩且全对的知识点
+    const todayPerfect = new Map<string, { subject: SubjectType; score?: number }>();
+    for (const ev of todayEvents) {
+      if (!ev.metrics.knowledgePoints) continue;
+      const isPerfect = (ev.metrics.totalCount && ev.metrics.correctCount === ev.metrics.totalCount)
+        || (ev.metrics.score !== undefined && ev.metrics.score >= 90);
+      if (!isPerfect) continue;
+      for (const kp of ev.metrics.knowledgePoints) {
+        if (!todayPerfect.has(kp)) todayPerfect.set(kp, { subject: ev.subject, score: ev.metrics.score });
+      }
+    }
+
+    // 历史上曾出错的知识点
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
+    for (const [kp, data] of todayPerfect) {
+      const historyErrors = allEvents.filter(e =>
+        e.timestamp < todayStart &&
+        e.metrics.knowledgePoints?.includes(kp) &&
+        e.metrics.errorTypes && e.metrics.errorTypes.length > 0
+      );
+      if (historyErrors.length === 0) continue;
+
+      const subjectLabel = SUBJECT_LABELS[data.subject];
+      const scoreStr = data.score ? `得分${data.score}分` : '全部正确';
+      insights.push({
+        category: 'milestone_progress',
+        subject: data.subject,
+        knowledgePoint: kp,
+        timeSpan: '今日',
+        parentMessage: `${subjectLabel}「${kp}」今日${scoreStr}，之前曾出错${historyErrors.length}次，进步明显`,
+        childMessage: `「${kp}」今天全对了，之前可是错过${historyErrors.length}次呢，你的努力有回报了`,
+        evidence: { previousValue: historyErrors.length, currentValue: data.score ?? 100 },
+      });
+    }
+
+    return insights.slice(0, 2);
   }
 
   private sortAndLimit(insights: MemoryInsight[], max: number): MemoryInsight[] {

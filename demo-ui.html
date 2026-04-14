@@ -844,13 +844,13 @@ try{ r=await get('/report/daily/xiaoming/'+today); }catch(e){
   r={childId:'xiaoming',date:today,totalMinutes:92,totalQuestions:53,overallAccuracy:83,hasData:true,
   dailyHighlight:'语文听写进步明显，"勇敢""温暖"两个新词全部写对了！',
   completedTasks:[
-    {title:'语文·听写（第5课生字词）',subject:'chinese',accuracy:90,score:90},
+    {title:'语文·听写（第5课生字词）',subject:'chinese',score:90},
     {title:'语文·背诵/跟读（《草原》第2段）',subject:'chinese',score:85},
-    {title:'数学·批改（练习册P20-21）',subject:'math',accuracy:80},
-    {title:'数学·AI讲题（退位减法专项）',subject:'math'},
-    {title:'数学·批改（应用题3道）',subject:'math',accuracy:67},
+    {title:'数学·批改（练习册P20-21）',subject:'math',score:80},
+    {title:'数学·AI讲题（退位减法专项）',subject:'math',score:75},
+    {title:'数学·批改（应用题3道）',subject:'math',score:67},
     {title:'英语·背诵/跟读（Unit5课文）',subject:'english',score:88},
-    {title:'英语·听写（Unit5单词10个）',subject:'english',accuracy:80,score:80}]};
+    {title:'英语·听写（Unit5单词10个）',subject:'english',score:80}]};
 }
 if(!r.hasData){document.getElementById('mvpDailyResult').innerHTML=`<div class="cd" style="text-align:center;color:var(--g5);padding:24px">
 <div style="font-size:32px;margin-bottom:8px">📭</div>今日暂无学习数据<br><span style="font-size:12px">孩子开始学习后这里会自动更新</span></div>`;return;}
@@ -862,13 +862,13 @@ document.getElementById('mvpDailyResult').innerHTML=`
 <div class="sg3"><div class="si"><div class="v">${r.totalMinutes}</div><div class="l">分钟</div></div>
 <div class="si"><div class="v">${r.totalQuestions}</div><div class="l">道题</div></div>
 <div class="si"><div class="v" style="color:${r.overallAccuracy>=80?'var(--s)':r.overallAccuracy>=60?'var(--w)':'var(--d)'}">${r.overallAccuracy}%</div><div class="l">正确率</div></div></div>
-<div style="margin-top:12px">${r.completedTasks.map(t=>{
+<div style="margin-top:12px">${[...r.completedTasks].sort((a,b)=>{const o={chinese:0,math:1,english:2};return (o[a.subject]??9)-(o[b.subject]??9);}).map(t=>{
   const icon=t.subject==='chinese'?'📖':t.subject==='math'?'🔢':'🌍';
-  const acc=t.accuracy!==undefined?`<span class="b ${t.accuracy>=80?'b-s':t.accuracy>=60?'b-w':'b-d'}">${t.accuracy}%</span>`:'';
-  const sc=t.score?`<span class="b b-p">${t.score}分</span>`:'';
+  const val=t.score!==undefined?t.score:(t.accuracy!==undefined?t.accuracy:null);
+  const badge=val!==null?`<span class="b ${val>=80?'b-s':val>=60?'b-w':'b-d'}">${val}分</span>`:'';
   return `<div style="display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid var(--g1)">
   <span style="font-size:16px">${icon}</span>
-  <div style="flex:1;font-size:13px">${t.title}</div>${acc}${sc}</div>`;}).join('')}</div>
+  <div style="flex:1;font-size:13px">${t.title}</div>${badge}</div>`;}).join('')}</div>
 ${r.dailyHighlight?`<div style="margin-top:12px;padding:10px;background:var(--sl);border-radius:8px;font-size:13px;color:#065F46">💡 ${r.dailyHighlight}</div>`:''}</div>`;
 // Load daily insights asynchronously
 try{
@@ -927,7 +927,7 @@ try{
   ${o.progressHighlights.map(h=>`<div style="padding:6px 0;font-size:13px;color:#065F46">🌟 ${h}</div>`).join('')}</div>`:''}
 
   <div class="cd"><div style="display:flex;gap:12px">
-  ${o.weakPointsTop3.length?`<div style="flex:1"><div class="tt" style="color:var(--d)">🔴 薄弱知识点 TOP3</div>
+  ${o.weakPointsTop3.length?`<div style="flex:1"><div class="tt" style="color:var(--d)">🔴 薄弱知识 TOP3</div>
   ${o.weakPointsTop3.map((w,i)=>{const errRate=w.errorRate||0;
   return `<div style="padding:8px;border-bottom:1px solid var(--g1)">
   <div style="display:flex;justify-content:space-between;align-items:center">

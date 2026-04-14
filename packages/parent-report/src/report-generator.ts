@@ -142,11 +142,13 @@ export class ReportGenerator {
       const accuracy = ev.metrics.totalCount
         ? computeAccuracy(ev.metrics.correctCount ?? 0, ev.metrics.totalCount)
         : undefined;
+      // Unify: always output score (use accuracy as score if no explicit score)
+      const score = ev.metrics.score ?? accuracy ?? undefined;
       completedTasks.push({
         title: `${SUBJECT_LABELS[ev.subject]}·${SOURCE_LABELS[ev.source] || ev.source}${ev.metrics.knowledgePoints?.length ? '（' + ev.metrics.knowledgePoints.slice(0, 2).join('、') + '）' : ''}`,
         subject: ev.subject,
         accuracy,
-        score: ev.metrics.score,
+        score,
       });
     }
 
@@ -326,19 +328,36 @@ export class ReportGenerator {
   ): string[] {
     const highlights: string[] = [];
 
-    if (prevEvents.length > 0 && accuracy > prevAccuracy) {
-      highlights.push(`正确率较上周提升${accuracy - prevAccuracy}个百分点`);
-    }
-
-    const totalMinutes = events.reduce((s, e) => s + (e.metrics.duration ?? 0), 0) / 60;
-    const prevMinutes = prevEvents.reduce((s, e) => s + (e.metrics.duration ?? 0), 0) / 60;
-    if (prevEvents.length > 0 && totalMinutes > prevMinutes * 1.1) {
-      highlights.push('学习时长较上周有所增加');
-    }
-
+    // 1. 完成度
     const recitations = events.filter(e => e.source === 'recitation' && (e.metrics.score ?? 0) >= 80);
-    if (recitations.length > 0) {
-      highlights.push(`完成${recitations.length}次背诵通关`);
+    const dictations = events.filter(e => e.source === 'dictation');
+    const aiLectures = events.filter(e => e.metrics.aiLectureWatched);
+    const completionParts: string[] = [];
+    if (recitations.length > 0) completionParts.push(`${recitations.length}次背诵通关`);
+    if (dictations.length > 0) completionParts.push(`${dictations.length}次听写`);
+    if (aiLectures.length > 0) completionParts.push(`${aiLectures.length}次AI讲解`);
+    if (completionParts.length > 0) {
+      highlights.push(`完成度：完成${completionParts.join('、')}`);
+    }
+
+    // 2. 错题订正
+    const correctionEvents = events.filter(e => e.source === 'ai_lecture' || e.source === 'homework_assistant');
+    if (correctionEvents.length > 0) {
+      highlights.push(`错题订正：通过AI讲解订正错题${correctionEvents.length}次`);
+    }
+
+    // 3. 知识点进步
+    if (prevEvents.length > 0) {
+      for (const subject of ['chinese', 'math', 'english'] as const) {
+        const cur = events.filter(e => e.subject === subject);
+        const prev = prevEvents.filter(e => e.subject === subject);
+        const curAcc = this.calcSubjectAccuracy(cur);
+        const prevAcc = this.calcSubjectAccuracy(prev);
+        if (curAcc !== null && prevAcc !== null && curAcc > prevAcc && curAcc - prevAcc >= 5) {
+          const label = SUBJECT_LABELS[subject];
+          highlights.push(`知识点：${label}正确率提升${curAcc - prevAcc}个百分点，成效明显`);
+        }
+      }
     }
 
     if (highlights.length === 0) {
@@ -346,6 +365,17 @@ export class ReportGenerator {
     }
 
     return highlights;
+  }
+
+  private calcSubjectAccuracy(events: LearningEvent[]): number | null {
+    let correct = 0, total = 0;
+    for (const e of events) {
+      if (e.metrics.totalCount) {
+        total += e.metrics.totalCount;
+        correct += e.metrics.correctCount ?? 0;
+      }
+    }
+    return total > 0 ? Math.round((correct / total) * 100) : null;
   }
 
   // ---------- Subject Details ----------
