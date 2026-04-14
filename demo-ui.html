@@ -928,7 +928,7 @@ try{
 
   <div class="cd"><div style="display:flex;gap:12px">
   ${o.weakPointsTop3.length?`<div style="flex:1"><div class="tt" style="color:var(--d)">🔴 薄弱知识点 TOP3</div>
-  ${o.weakPointsTop3.map((w,i)=>{const errRate=totalErrors>0?Math.round(parseInt((w.detail.match(/\\d+/)||['0'])[0])/totalErrors*100):0;
+  ${o.weakPointsTop3.map((w,i)=>{const errRate=w.errorRate||0;
   return `<div style="padding:8px;border-bottom:1px solid var(--g1)">
   <div style="display:flex;justify-content:space-between;align-items:center">
   <div style="font-size:13px;font-weight:600">${i+1}. ${w.subject==='chinese'?'语文':w.subject==='math'?'数学':'英语'} · ${w.point}</div>

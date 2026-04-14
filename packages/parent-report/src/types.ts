@@ -66,7 +66,7 @@ export interface WeeklyReport {
     overallAccuracy: number;
     accuracyDelta: number;
     behaviorTags: { text: string; type: 'positive' | 'warning' }[];
-    weakPointsTop3: { subject: SubjectType; point: string; detail: string }[];
+    weakPointsTop3: { subject: SubjectType; point: string; detail: string; errorRate: number }[];
     progressHighlights: string[];
   };
   // Module 2: Subject details

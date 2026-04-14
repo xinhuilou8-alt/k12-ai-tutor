@@ -305,6 +305,8 @@ export class ReportGenerator {
       }
     }
 
+    const totalKPErrors = Array.from(pointFreq.values()).reduce((s, v) => s + v.count, 0);
+
     return Array.from(pointFreq.entries())
       .sort((a, b) => b[1].count - a[1].count)
       .slice(0, 3)
@@ -312,6 +314,7 @@ export class ReportGenerator {
         subject,
         point,
         detail: `本周出错${count}次，需重点复习`,
+        errorRate: totalKPErrors > 0 ? Math.round((count / totalKPErrors) * 100) : 0,
       }));
   }
 
