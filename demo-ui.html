@@ -840,16 +840,17 @@ const today=new Date().toISOString().slice(0,10);
 const t=new Date(),weekday=['日','一','二','三','四','五','六'][t.getDay()];
 let r;
 try{ r=await get('/report/daily/xiaoming/'+today); }catch(e){
-  // Fallback: local fake data so the page always shows something
-  r={childId:'xiaoming',date:today,totalMinutes:88,totalQuestions:43,overallAccuracy:81,hasData:true,
-  dailyHighlight:'语文听写表现出色，正确率90%，继续保持！',
+  // Fallback: realistic fake data for a grade-4 student's afternoon
+  r={childId:'xiaoming',date:today,totalMinutes:92,totalQuestions:53,overallAccuracy:83,hasData:true,
+  dailyHighlight:'语文听写进步明显，"勇敢""温暖"两个新词全部写对了！',
   completedTasks:[
-    {title:'英语·背诵/跟读',subject:'english',score:88},
-    {title:'语文·听写',subject:'chinese',accuracy:90,score:90},
-    {title:'数学·批改',subject:'math',accuracy:80},
-    {title:'数学·AI讲题',subject:'math'},
-    {title:'数学·应用题',subject:'math',accuracy:67},
-    {title:'英语·听写',subject:'english',accuracy:80,score:80}]};
+    {title:'语文·听写（第5课生字词）',subject:'chinese',accuracy:90,score:90},
+    {title:'语文·背诵/跟读（《草原》第2段）',subject:'chinese',score:85},
+    {title:'数学·批改（练习册P20-21）',subject:'math',accuracy:80},
+    {title:'数学·AI讲题（退位减法专项）',subject:'math'},
+    {title:'数学·批改（应用题3道）',subject:'math',accuracy:67},
+    {title:'英语·背诵/跟读（Unit5课文）',subject:'english',score:88},
+    {title:'英语·听写（Unit5单词10个）',subject:'english',accuracy:80,score:80}]};
 }
 if(!r.hasData){document.getElementById('mvpDailyResult').innerHTML=`<div class="cd" style="text-align:center;color:var(--g5);padding:24px">
 <div style="font-size:32px;margin-bottom:8px">📭</div>今日暂无学习数据<br><span style="font-size:12px">孩子开始学习后这里会自动更新</span></div>`;return;}
