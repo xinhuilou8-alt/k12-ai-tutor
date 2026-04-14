@@ -68,50 +68,100 @@ export class InsightEngine {
   ): MemoryInsight[] {
     if (todayEvents.length === 0) return [];
 
-    const insights: MemoryInsight[] = [];
+    const result: MemoryInsight[] = [];
 
-    // 今日涉及的知识点和学科
+    // 今日涉及的知识点
     const todayKPs = new Set<string>();
-    const todaySubjects = new Set<SubjectType>();
     for (const ev of todayEvents) {
-      todaySubjects.add(ev.subject);
       if (ev.metrics.knowledgePoints) {
         for (const kp of ev.metrics.knowledgePoints) todayKPs.add(kp);
       }
     }
 
-    // 1. 今日出错的知识点，历史上也出过错 → 重复犯错提醒
+    // Slot 1: 正向鼓励（今日全对的知识点 or 学科表现亮眼）
+    const todayPerfect = this.detectTodayPerfectKPs(todayEvents, allEvents, currentDate);
+    const subjectHighlight = this.detectTodaySubjectHighlight(todayEvents, allEvents, currentDate);
+    if (todayPerfect.length > 0) {
+      result.push(todayPerfect[0]);
+    } else if (subjectHighlight) {
+      result.push(subjectHighlight);
+    }
+
+    // Slot 2: 知识关联（今日知识点与2周前的旧知识有交集）
+    const links = this.detectTodayKnowledgeLinks(todayEvents, allEvents, currentDate);
+    if (links.length > 0) {
+      result.push(links[0]);
+    }
+
+    // Slot 3: 重复犯错提醒（最多1条）
     const todayErrorKPs = new Set<string>();
     for (const ev of todayEvents) {
       if (ev.metrics.errorTypes && ev.metrics.errorTypes.length > 0 && ev.metrics.knowledgePoints) {
         for (const kp of ev.metrics.knowledgePoints) todayErrorKPs.add(kp);
       }
     }
-    if (todayErrorKPs.size > 0) {
+    if (todayErrorKPs.size > 0 && result.length < maxInsights) {
       const recurring = this.detectRecurringErrors(allEvents, currentDate);
-      insights.push(...recurring.filter(r => todayErrorKPs.has(r.knowledgePoint)));
+      const matched = recurring.filter(r => todayErrorKPs.has(r.knowledgePoint));
+      if (matched.length > 0) result.push(matched[0]);
     }
 
-    // 2. 今日全对的知识点，历史上曾出过错 → 进步表扬
-    const todayPerfectKPs = this.detectTodayPerfectKPs(todayEvents, allEvents, currentDate);
-    insights.push(...todayPerfectKPs);
+    return result.slice(0, maxInsights);
+  }
 
-    // 3. 今日某学科表现优于历史平均 → 正向鼓励亮点
-    const highlight = this.detectTodaySubjectHighlight(todayEvents, allEvents, currentDate);
-    if (highlight) insights.push(highlight);
+  /**
+   * 今日知识点与2周前旧知识的关联（专为今日快照设计）
+   */
+  private detectTodayKnowledgeLinks(
+    todayEvents: LearningEvent[],
+    allEvents: LearningEvent[],
+    now: Date,
+  ): MemoryInsight[] {
+    const insights: MemoryInsight[] = [];
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
+    const twoWeeksAgo = new Date(now);
+    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
 
-    // 4. 今日知识点与历史的关联
-    const links = this.detectKnowledgeLinks(allEvents, currentDate);
-    insights.push(...links.filter(l => todayKPs.has(l.knowledgePoint)));
+    // 今日的知识点
+    const todayKPs = new Map<string, SubjectType>();
+    for (const ev of todayEvents) {
+      if (ev.metrics.knowledgePoints) {
+        for (const kp of ev.metrics.knowledgePoints) {
+          if (!todayKPs.has(kp)) todayKPs.set(kp, ev.subject);
+        }
+      }
+    }
 
-    // 排序：进步表扬优先 > 关联 > 重复犯错
-    const priority: Record<string, number> = {
-      milestone_progress: 0,
-      knowledge_link: 1,
-      recurring_error: 2,
-    };
-    insights.sort((a, b) => priority[a.category] - priority[b.category]);
-    return insights.slice(0, maxInsights);
+    // 2周前以上的旧知识点
+    const olderKPs = new Map<string, { subject: SubjectType; date: Date }>();
+    for (const ev of allEvents) {
+      if (ev.timestamp >= twoWeeksAgo) continue;
+      if (!ev.metrics.knowledgePoints) continue;
+      for (const kp of ev.metrics.knowledgePoints) {
+        if (!olderKPs.has(kp)) olderKPs.set(kp, { subject: ev.subject, date: ev.timestamp });
+      }
+    }
+
+    for (const [kp, subject] of todayKPs) {
+      const older = olderKPs.get(kp);
+      if (!older) continue;
+
+      const weeksAgo = weeksBetween(older.date, now);
+      const subjectLabel = SUBJECT_LABELS[subject];
+
+      insights.push({
+        category: 'knowledge_link',
+        subject,
+        knowledgePoint: kp,
+        timeSpan: `${weeksAgo}周前`,
+        parentMessage: `今天练习的「${kp}」与${weeksAgo}周前学过的内容有关联，可引导孩子回顾巩固`,
+        childMessage: `今天练的「${kp}」，${weeksAgo}周前你也学过——还记得吗？温故知新，理解更深`,
+        evidence: { relatedTopic: kp },
+      });
+    }
+
+    return insights.slice(0, 1);
   }
 
   /**
