@@ -927,15 +927,16 @@ try{
   ${o.progressHighlights.map(h=>`<div style="padding:6px 0;font-size:13px;color:#065F46">🌟 ${h}</div>`).join('')}</div>`:''}
 
   <div class="cd"><div style="display:flex;gap:12px">
-  ${o.weakPointsTop3.length?`<div style="flex:1"><div class="tt" style="color:var(--d)">🔴 薄弱知识点</div>
+  ${o.weakPointsTop3.length?`<div style="flex:1"><div class="tt" style="color:var(--d)">🔴 薄弱知识点 TOP3</div>
   ${o.weakPointsTop3.map((w,i)=>{const errRate=totalErrors>0?Math.round(parseInt((w.detail.match(/\\d+/)||['0'])[0])/totalErrors*100):0;
   return `<div style="padding:8px;border-bottom:1px solid var(--g1)">
-  <div style="display:flex;align-items:center;gap:8px">
-  <span style="font-size:16px;font-weight:700;color:var(--d)">${i+1}</span>
-  <div style="flex:1"><div style="font-size:13px;font-weight:600">${w.subject==='chinese'?'语文':w.subject==='math'?'数学':'英语'} · ${w.point}</div>
-  <div style="font-size:11px;color:var(--g5)">错题占比 ${errRate}%</div></div>
-  <button onclick="startKPPractice('${w.point.replace(/'/g,"\\'")}','${w.subject}')" style="padding:3px 8px;font-size:10px;background:#EF4444;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap">🏋️ 练习</button>
-  </div></div>`;}).join('')}</div>`:''}
+  <div style="display:flex;justify-content:space-between;align-items:center">
+  <div style="font-size:13px;font-weight:600">${i+1}. ${w.subject==='chinese'?'语文':w.subject==='math'?'数学':'英语'} · ${w.point}</div>
+  <span style="font-size:12px;color:var(--d)">${errRate}%</span></div>
+  <div style="margin-top:4px;height:6px;background:var(--g1);border-radius:3px;overflow:hidden">
+  <div style="height:100%;width:${errRate}%;background:${i===0?'#EF4444':i===1?'#F97316':'#9CA3AF'};border-radius:3px"></div></div>
+  <button onclick="startKPPractice('${w.point.replace(/'/g,"\\'")}','${w.subject}')" style="margin-top:6px;padding:3px 8px;font-size:10px;background:#EF4444;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap">🏋️ 同知识点练习</button>
+  </div>`;}).join('')}</div>`:''}
   ${topErrors.length?`<div style="flex:1;border-left:1px solid var(--g1);padding-left:12px"><div class="tt" style="color:var(--w)">🔍 错因追踪 TOP3</div>
   ${topErrors.map(([type,count],i)=>{const pct=Math.round(count/totalErrors*100);
   return `<div style="padding:8px;border-bottom:1px solid var(--g1)">
