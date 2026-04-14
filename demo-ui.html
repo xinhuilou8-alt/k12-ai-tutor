@@ -900,15 +900,17 @@ try{
   const topErrors=Object.entries(errMap).sort((a,b)=>b[1]-a[1]).slice(0,3);
   const totalErrors=subs.reduce((s,sub)=>s+sub.totalErrors,0);
 
-  // 错题清单：按学科汇总
+  // 错题清单：按学科汇总（存到全局供弹窗使用）
   const errorList=subs.filter(s=>s.totalErrors>0).map(s=>({
     subject:s.subjectLabel,
     icon:s.subject==='chinese'?'📖':s.subject==='math'?'🔢':'🌍',
+    subjectKey:s.subject,
     errors:s.totalErrors,
-    weakPoints:s.weakPoints.slice(0,3),
+    weakPoints:s.weakPoints.slice(0,5),
     cause:s.dominantErrorCause,
-    dist:(s.errorDistribution||[]).slice(0,3)
+    dist:(s.errorDistribution||[]).slice(0,5)
   }));
+  window._errorListData={errorList,totalErrors};
 
   document.getElementById('mvpWeeklyResult').innerHTML=`
   <div class="cd"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -918,19 +920,8 @@ try{
   <div style="flex:1;padding:10px;background:var(--g50);border-radius:10px"><div style="font-size:20px;font-weight:700;color:var(--p)">${o.completionRate}%</div><div style="font-size:11px;color:var(--g5)">完成率${o.completionRateDelta>0?' ↑'+o.completionRateDelta:o.completionRateDelta<0?' ↓'+Math.abs(o.completionRateDelta):''}</div></div>
   <div style="flex:1;padding:10px;background:var(--g50);border-radius:10px"><div style="font-size:20px;font-weight:700">${o.dailyAvgMinutes}</div><div style="font-size:11px;color:var(--g5)">日均(分钟)</div></div>
   <div style="flex:1;padding:10px;background:var(--g50);border-radius:10px"><div style="font-size:20px;font-weight:700;color:${o.overallAccuracy>=80?'var(--s)':'var(--w)'}">${o.overallAccuracy}%</div><div style="font-size:11px;color:var(--g5)">正确率${o.accuracyDelta>0?' ↑'+o.accuracyDelta:o.accuracyDelta<0?' ↓'+Math.abs(o.accuracyDelta):''}</div></div>
-  <div style="flex:1;padding:10px;background:${totalErrors>0?'#FEF2F2':'var(--g50)'};border-radius:10px"><div style="font-size:20px;font-weight:700;color:var(--d)">${totalErrors}</div><div style="font-size:11px;color:var(--g5)">错题数</div></div></div>
+  <div onclick="openErrorList()" style="flex:1;padding:10px;background:${totalErrors>0?'#FEF2F2':'var(--g50)'};border-radius:10px;cursor:pointer;transition:.2s" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'"><div style="font-size:20px;font-weight:700;color:var(--d)">${totalErrors}</div><div style="font-size:11px;color:var(--g5)">错题数 ▸</div></div></div>
   <div style="display:flex;flex-wrap:wrap;gap:6px;margin:10px 0">${o.behaviorTags.map(t=>`<span class="b ${t.type==='positive'?'b-s':'b-d'}">${t.type==='positive'?'✅':'⚠️'} ${t.text}</span>`).join('')}</div></div>
-
-  ${totalErrors>0?`<div class="cd"><div class="tt" style="color:var(--d)">📝 错题清单</div>
-  <div style="display:flex;gap:10px">${errorList.map(e=>`<div style="flex:1;padding:10px;background:var(--g50);border-radius:10px">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-  <span style="font-size:13px;font-weight:600">${e.icon} ${e.subject}</span>
-  <span class="b b-d">${e.errors}题</span></div>
-  <div style="font-size:11px;color:var(--g5);margin-bottom:4px">主因: ${e.cause}</div>
-  ${e.dist.map(d=>`<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0">
-  <span>${d.type}</span><span style="color:var(--d)">${d.count}次</span></div>`).join('')}
-  ${e.weakPoints.length?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:4px">${e.weakPoints.map(w=>`<span class="b b-d" style="font-size:10px">${w}</span>`).join('')}</div>`:''}
-  </div>`).join('')}</div></div>`:''}
 
   ${o.progressHighlights.length?`<div class="cd" style="background:linear-gradient(135deg,#ECFDF5,#F0FDF4);border:1px solid #BBF7D0"><div class="tt" style="color:#065F46">📈 本周进步</div>
   ${o.progressHighlights.map(h=>`<div style="padding:6px 0;font-size:13px;color:#065F46">🌟 ${h}</div>`).join('')}</div>`:''}
@@ -981,6 +972,39 @@ try{
   </div></div>`).join('')}</div>`;
   showStatus('周报告已生成');
 }catch(e){document.getElementById('mvpWeeklyResult').innerHTML='<div class="nt nw">后端未连接</div>';}}
+
+function openErrorList(){
+  var d=window._errorListData;
+  if(!d||!d.errorList.length){showStatus('本周暂无错题');return;}
+  var modal=document.createElement('div');
+  modal.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:999';
+  modal.innerHTML='<div style="background:#fff;border-radius:16px;padding:20px;max-width:500px;width:95%;max-height:85vh;overflow-y:auto">'
+  +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'
+  +'<div style="font-size:16px;font-weight:700">📝 错题清单 · 共'+d.totalErrors+'题</div>'
+  +'<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer">✕</button></div>'
+  +d.errorList.map(function(e){
+    return '<div style="margin-bottom:16px;padding:14px;background:var(--g50);border-radius:12px">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+    +'<span style="font-size:15px;font-weight:700">'+e.icon+' '+e.subject+'</span>'
+    +'<span style="padding:2px 8px;background:#FEE2E2;color:#DC2626;border-radius:10px;font-size:12px;font-weight:600">'+e.errors+'题</span></div>'
+    +'<div style="font-size:12px;color:var(--g5);margin-bottom:8px">主要错因：<span style="color:var(--d);font-weight:600">'+e.cause+'</span></div>'
+    +'<div style="font-size:12px;font-weight:600;margin-bottom:4px;color:var(--g6)">错误类型明细</div>'
+    +e.dist.map(function(dd){
+      var pct=e.errors>0?Math.round(dd.count/e.errors*100):0;
+      return '<div style="margin-bottom:4px">'
+      +'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px"><span>'+dd.type+'</span><span style="color:var(--d)">'+dd.count+'次 ('+pct+'%)</span></div>'
+      +'<div style="height:4px;background:var(--g1);border-radius:2px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:#EF4444;border-radius:2px"></div></div></div>';
+    }).join('')
+    +(e.weakPoints.length?'<div style="font-size:12px;font-weight:600;margin:8px 0 4px;color:var(--g6)">涉及知识点</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:4px">'+e.weakPoints.map(function(w){
+      return '<span style="padding:2px 8px;background:#FEE2E2;color:#991B1B;border-radius:4px;font-size:11px">'+w+'</span>';
+    }).join('')+'</div>':'')
+    +'<button onclick="startKPPractice(\''+e.weakPoints[0]+'\',\''+e.subjectKey+'\')" style="margin-top:8px;width:100%;padding:6px;font-size:12px;background:var(--d);color:#fff;border:none;border-radius:6px;cursor:pointer">🏋️ 开始'+e.subject+'纠错练习</button>'
+    +'</div>';
+  }).join('')
+  +'</div>';
+  document.body.appendChild(modal);
+}
 
 function startKPPractice(kp,subject){
   const subLabel=subject==='chinese'?'语文':subject==='math'?'数学':'英语';
