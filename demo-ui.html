@@ -83,6 +83,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="tab" data-t="chinese">📖语文</div>
     <div class="tab" data-t="math">🔢数学</div>
     <div class="tab" data-t="english">🌍英语</div>
+    <div class="tab" data-t="efficient">🚀高效学习</div>
     <div class="tab" data-t="manage">📊管理</div>
     <div class="tab" data-t="profile">📈学情</div>
     <div class="tab" data-t="parent">👨家长</div>
@@ -91,7 +92,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 <script>
 // ===== STATE =====
-const S={tab:'mvpreport',sub:{chinese:'dictation',math:'quiz',english:'dialogue',manage:'errors',parent:'report',mvpreport:'weekly'},
+const S={tab:'mvpreport',sub:{chinese:'dictation',math:'quiz',english:'dialogue',manage:'focus',efficient:'errors',parent:'report',mvpreport:'weekly'},
 grade:4,streak:7,mStep:0,mRes:[],dPhase:'ready',dStep:0,dRes:[],ePhase:'select',eTurn:0,eScn:null,
 rPhase:'list',rStep:0,fPhase:'ready',fRound:1,fFocus:true,fSec:600,fTid:null,
 omPhase:'ready',omStep:0,omRes:[],hToday:false,pcSit:null,wEval:null,fsSession:null,fsWords:[],feynmanSession:null,
@@ -204,12 +205,11 @@ return `<div class="cd"><div class="tt">📚 课前预习 · 三步框架</div>
 
 // ===== TAB 3: CHINESE =====
 function rChinese(){
-const subs=[{id:'dictation',em:'📝',nm:'生字听写',ds:'听写练习'},{id:'fivestep',em:'✏️',nm:'识读写用测',ds:'五步法'},{id:'sandwich',em:'🥪',nm:'AI三明治写作',ds:'写作训练'},{id:'feynman',em:'🧑‍🏫',nm:'费曼教学',ds:'当小老师'}];
+const subs=[{id:'dictation',em:'📝',nm:'生字听写',ds:'听写练习'},{id:'fivestep',em:'✏️',nm:'识读写用测',ds:'五步法'},{id:'sandwich',em:'🥪',nm:'AI三明治写作',ds:'写作训练'}];
 let h=subNav('chinese',subs);
 if(S.sub.chinese==='dictation') h+=rDictation();
 else if(S.sub.chinese==='fivestep') h+=rFiveStep();
-else if(S.sub.chinese==='sandwich') h+=rSandwich();
-else h+=rFeynman();
+else h+=rSandwich();
 return h;
 }
 function rDictation(){
@@ -330,11 +330,10 @@ ${fs.currentPhase==='summary'?`<div class="cd"><div class="tt">📝 总结你教
 
 // ===== TAB 4: MATH =====
 function rMath(){
-const subs=[{id:'quiz',em:'🔢',nm:'计算题批改',ds:'口算练习'},{id:'multisol',em:'🧮',nm:'一题多解',ds:'多种解法'},{id:'metaphor',em:'💡',nm:'概念比喻',ds:'比喻库'}];
+const subs=[{id:'quiz',em:'🔢',nm:'计算题批改',ds:'口算练习'},{id:'multisol',em:'🧮',nm:'一题多解',ds:'多种解法'}];
 let h=subNav('math',subs);
 if(S.sub.math==='quiz') h+=rMathQuiz();
-else if(S.sub.math==='multisol') h+=rMultiSol();
-else h+=rMetaphor();
+else h+=rMultiSol();
 return h;
 }
 function rMathQuiz(){
@@ -414,12 +413,21 @@ ${[{name:'Leo',em:'🦁',age:9,nat:'American',style:'gentle',level:'beginner',li
 <button class="btn bsm bo" onclick="loadCompanionPrompt('${c.name}')">查看</button></div></div>`).join('')}</div>`;
 }
 
+// ===== TAB: 高效学习 =====
+function rEfficient(){
+const subs=[{id:'errors',em:'📊',nm:'错题归因',ds:'原因分类'},{id:'feynman',em:'🧑‍🏫',nm:'费曼教学',ds:'当小老师'},{id:'metaphor',em:'💡',nm:'概念比喻',ds:'比喻库'},{id:'review',em:'🔄',nm:'间隔复习',ds:'SM-2算法'},{id:'multiweek',em:'📅',nm:'多周期计划',ds:'长期规划'}];
+let h=subNav('efficient',subs);
+const fn={errors:rErrors,feynman:rFeynman,metaphor:rMetaphor,review:rReview,multiweek:rMultiWeek};
+h+=(fn[S.sub.efficient]||rErrors)();
+return h;
+}
+
 // ===== TAB 6: MANAGE =====
 function rManage(){
-const subs=[{id:'errors',em:'📊',nm:'错题归因',ds:'原因分类'},{id:'review',em:'🔄',nm:'间隔复习',ds:'SM-2算法'},{id:'focus',em:'⏱️',nm:'专注计时',ds:'番茄钟'},{id:'oral',em:'🎤',nm:'口头录音',ds:'语音判题'},{id:'habit',em:'🔥',nm:'习惯打卡',ds:'连续记录'},{id:'multiweek',em:'📅',nm:'多周期计划',ds:'长期规划'}];
+const subs=[{id:'focus',em:'⏱️',nm:'专注计时',ds:'番茄钟'},{id:'oral',em:'🎤',nm:'口头录音',ds:'语音判题'},{id:'habit',em:'🔥',nm:'习惯打卡',ds:'连续记录'}];
 let h=subNav('manage',subs);
-const fn={errors:rErrors,review:rReview,focus:rFocus,oral:rOral,habit:rHabit,multiweek:rMultiWeek};
-h+=(fn[S.sub.manage]||rErrors)();
+const fn={focus:rFocus,oral:rOral,habit:rHabit};
+h+=(fn[S.sub.manage]||rFocus)();
 return h;
 }
 function rErrors(){
@@ -1301,7 +1309,7 @@ showStatus('多解方案已生成');
 }catch(e){document.getElementById('multiSolResult').innerHTML='<div class="nt nd">后端未连接</div>';}}
 
 // ===== RENDER ENGINE =====
-const RR={home:rHome,mvpreport:rMvpReport,preview:rPreview,chinese:rChinese,math:rMath,english:rEnglish,manage:rManage,profile:rProfile,parent:rParent};
+const RR={home:rHome,mvpreport:rMvpReport,preview:rPreview,chinese:rChinese,math:rMath,english:rEnglish,efficient:rEfficient,manage:rManage,profile:rProfile,parent:rParent};
 function R(){document.getElementById('ct').innerHTML=RR[S.tab]();document.getElementById('ct').scrollTop=0;
 // Auto-load report data
 if(S.tab==='mvpreport'){
