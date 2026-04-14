@@ -96,7 +96,11 @@ export class InsightEngine {
     const todayPerfectKPs = this.detectTodayPerfectKPs(todayEvents, allEvents, currentDate);
     insights.push(...todayPerfectKPs);
 
-    // 3. 今日知识点与历史的关联
+    // 3. 今日某学科表现优于历史平均 → 正向鼓励亮点
+    const highlight = this.detectTodaySubjectHighlight(todayEvents, allEvents, currentDate);
+    if (highlight) insights.push(highlight);
+
+    // 4. 今日知识点与历史的关联
     const links = this.detectKnowledgeLinks(allEvents, currentDate);
     insights.push(...links.filter(l => todayKPs.has(l.knowledgePoint)));
 
@@ -157,6 +161,76 @@ export class InsightEngine {
     }
 
     return insights.slice(0, 2);
+  }
+
+  /**
+   * 检测今日某学科表现优于历史平均 → 正向鼓励
+   */
+  private detectTodaySubjectHighlight(
+    todayEvents: LearningEvent[],
+    allEvents: LearningEvent[],
+    now: Date,
+  ): MemoryInsight | null {
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
+    const historyEvents = allEvents.filter(e => e.timestamp < todayStart);
+    if (historyEvents.length === 0) return null;
+
+    let bestDelta = 0;
+    let bestInsight: MemoryInsight | null = null;
+
+    for (const subject of ['chinese', 'math', 'english'] as SubjectType[]) {
+      const todaySub = todayEvents.filter(e => e.subject === subject);
+      const historySub = historyEvents.filter(e => e.subject === subject);
+
+      const todayAcc = this.calcAccuracy(todaySub);
+      const histAcc = this.calcAccuracy(historySub);
+
+      if (todayAcc === null || histAcc === null) continue;
+      const delta = todayAcc - histAcc;
+
+      // 今日比历史平均高5分以上，或今日>=85分
+      if (delta > bestDelta && (delta >= 5 || todayAcc >= 85)) {
+        bestDelta = delta;
+        const subjectLabel = SUBJECT_LABELS[subject];
+
+        // 找今日该学科最高分的具体任务
+        let bestTask = '';
+        let bestScore = 0;
+        for (const ev of todaySub) {
+          const s = ev.metrics.score ?? (ev.metrics.totalCount ? Math.round((ev.metrics.correctCount ?? 0) / ev.metrics.totalCount * 100) : 0);
+          if (s > bestScore) {
+            bestScore = s;
+            bestTask = ev.metrics.knowledgePoints?.[0] ?? '';
+          }
+        }
+
+        const taskStr = bestTask ? `「${bestTask}」` : '';
+        if (delta >= 5) {
+          bestInsight = {
+            category: 'milestone_progress',
+            subject,
+            knowledgePoint: bestTask || `${subjectLabel}整体`,
+            timeSpan: '今日',
+            parentMessage: `${subjectLabel}${taskStr}今日正确率${todayAcc}%，比历史平均${histAcc}%高出${delta}个百分点，表现亮眼`,
+            childMessage: `${subjectLabel}${taskStr}今天考了${todayAcc}分，比你平时的${histAcc}分高了${delta}分，太棒了！`,
+            evidence: { previousValue: histAcc, currentValue: todayAcc },
+          };
+        } else {
+          bestInsight = {
+            category: 'milestone_progress',
+            subject,
+            knowledgePoint: bestTask || `${subjectLabel}整体`,
+            timeSpan: '今日',
+            parentMessage: `${subjectLabel}${taskStr}今日得分${todayAcc}分，保持了较高水准，值得肯定`,
+            childMessage: `${subjectLabel}${taskStr}今天${todayAcc}分，稳稳的，继续保持！`,
+            evidence: { previousValue: histAcc, currentValue: todayAcc },
+          };
+        }
+      }
+    }
+
+    return bestInsight;
   }
 
   private sortAndLimit(insights: MemoryInsight[], max: number): MemoryInsight[] {
