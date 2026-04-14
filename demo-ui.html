@@ -91,7 +91,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 <script>
 // ===== STATE =====
-const S={tab:'home',sub:{chinese:'dictation',math:'quiz',english:'dialogue',manage:'errors',parent:'report'},
+const S={tab:'home',sub:{chinese:'dictation',math:'quiz',english:'dialogue',manage:'errors',parent:'report',mvpreport:'daily'},
 grade:4,streak:7,mStep:0,mRes:[],dPhase:'ready',dStep:0,dRes:[],ePhase:'select',eTurn:0,eScn:null,
 rPhase:'list',rStep:0,fPhase:'ready',fRound:1,fFocus:true,fSec:600,fTid:null,
 omPhase:'ready',omStep:0,omRes:[],hToday:false,pcSit:null,wEval:null,fsSession:null,fsWords:[],feynmanSession:null,
@@ -147,30 +147,38 @@ ${S.ach.map(a=>`<div style="text-align:center;opacity:${a.e?1:.3}"><div style="f
 
 // ===== MVP-学情报告Page =====
 function rMvpReport(){
-return `<div class="cd" style="background:linear-gradient(135deg,#EEF2FF,#F5F3FF);border:none;text-align:center;padding:16px">
-<div style="font-size:22px">📊</div>
-<div style="font-size:16px;font-weight:700">MVP-学情报告Page</div>
-<div style="font-size:12px;color:var(--g5);margin-top:4px">学情快照 + 作业摘要 · 家长一站式查看</div></div>
+const subs=[{id:'daily',em:'📅',nm:'今日快照',ds:'实时学情'},{id:'weekly',em:'📊',nm:'本周报告',ds:'全科分析'},{id:'summary',em:'📋',nm:'作业摘要',ds:'分享老师'},{id:'anomaly',em:'⚠️',nm:'异常检测',ds:'行为监测'}];
+let h=`<div class="cd" style="background:linear-gradient(135deg,#EEF2FF,#F5F3FF);border:none;text-align:center;padding:12px">
+<div style="font-size:18px">📊</div>
+<div style="font-size:15px;font-weight:700">MVP-学情报告</div></div>`;
+h+=subNav('mvpreport',subs);
+if(S.sub.mvpreport==='daily') h+=rMvpDaily();
+else if(S.sub.mvpreport==='weekly') h+=rMvpWeekly();
+else if(S.sub.mvpreport==='summary') h+=rMvpSummaryTab();
+else h+=rMvpAnomalyTab();
+return h;
+}
 
-<div class="cd"><div class="tt">📅 今日学习快照</div>
-<div style="font-size:13px;color:var(--g5);margin-bottom:8px">实时更新，1屏看完孩子今天的学习情况</div>
-<div class="bg"><button class="btn bp" onclick="loadMvpDaily()">📅 查看今日快照</button></div></div>
-<div id="mvpDailyResult"></div>
+function rMvpDaily(){
+return `<div id="mvpDailyResult"><div class="cd" style="text-align:center;color:var(--g5);padding:20px">⏳ 加载中...</div></div>`;
+}
 
-<div class="cd"><div class="tt">📊 本周学情报告</div>
-<div style="font-size:13px;color:var(--g5);margin-bottom:8px">全科总览 + 分学科明细 + 下周规划</div>
-<div class="bg"><button class="btn bp" onclick="loadMvpWeekly()">📊 生成周报告</button></div></div>
-<div id="mvpWeeklyResult"></div>
+function rMvpWeekly(){
+return `<div id="mvpWeeklyResult"><div class="cd" style="text-align:center;color:var(--g5);padding:20px">⏳ 加载中...</div></div>`;
+}
 
-<div class="cd"><div class="tt">📋 作业完成摘要</div>
-<div style="font-size:13px;color:var(--g5);margin-bottom:8px">一键生成，可分享给老师</div>
+function rMvpSummaryTab(){
+return `<div class="cd"><div class="tt">📋 作业完成摘要</div>
+<div style="font-size:13px;color:var(--g5);margin-bottom:8px">基于今日学习数据一键生成，可分享给老师</div>
 <div class="bg"><button class="btn bp" onclick="loadMvpSummary()">📋 生成摘要</button>
-<button class="btn bo" onclick="shareMvpSummary()">🔗 分享</button></div></div>
-<div id="mvpSummaryResult"></div>
+<button class="btn bo" onclick="shareMvpSummary()">🔗 复制分享</button></div></div>
+<div id="mvpSummaryResult"></div>`;
+}
 
-<div class="cd"><div class="tt">⚠️ 异常行为检测</div>
-<div style="font-size:13px;color:var(--g5);margin-bottom:8px">自动检测秒搜、深夜学习、未订正等异常</div>
-<div class="bg"><button class="btn bo" onclick="loadMvpAnomalies()">🔍 检测异常</button></div></div>
+function rMvpAnomalyTab(){
+return `<div class="cd"><div class="tt">⚠️ 异常行为检测</div>
+<div style="font-size:13px;color:var(--g5);margin-bottom:8px">自动检测秒搜抄答案、深夜学习、错题未订正等异常行为</div>
+<div class="bg"><button class="btn bp" onclick="loadMvpAnomalies()">🔍 开始检测</button></div></div>
 <div id="mvpAnomalyResult"></div>`;
 }
 
@@ -1101,7 +1109,12 @@ showStatus('多解方案已生成');
 
 // ===== RENDER ENGINE =====
 const RR={home:rHome,mvpreport:rMvpReport,preview:rPreview,chinese:rChinese,math:rMath,english:rEnglish,manage:rManage,profile:rProfile,parent:rParent};
-function R(){document.getElementById('ct').innerHTML=RR[S.tab]();document.getElementById('ct').scrollTop=0;}
+function R(){document.getElementById('ct').innerHTML=RR[S.tab]();document.getElementById('ct').scrollTop=0;
+// Auto-load report data
+if(S.tab==='mvpreport'){
+  if(S.sub.mvpreport==='daily')setTimeout(loadMvpDaily,50);
+  if(S.sub.mvpreport==='weekly')setTimeout(loadMvpWeekly,50);
+}}
 document.getElementById('tabs').addEventListener('click',e=>{const t=e.target.closest('.tab');if(!t)return;
 document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');S.tab=t.dataset.t;R();});
 R();
