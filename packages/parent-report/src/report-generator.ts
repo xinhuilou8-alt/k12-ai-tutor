@@ -143,7 +143,7 @@ export class ReportGenerator {
         ? computeAccuracy(ev.metrics.correctCount ?? 0, ev.metrics.totalCount)
         : undefined;
       completedTasks.push({
-        title: `${SUBJECT_LABELS[ev.subject]}·${SOURCE_LABELS[ev.source] || ev.source}`,
+        title: `${SUBJECT_LABELS[ev.subject]}·${SOURCE_LABELS[ev.source] || ev.source}${ev.metrics.knowledgePoints?.length ? '（' + ev.metrics.knowledgePoints.slice(0, 2).join('、') + '）' : ''}`,
         subject: ev.subject,
         accuracy,
         score: ev.metrics.score,
