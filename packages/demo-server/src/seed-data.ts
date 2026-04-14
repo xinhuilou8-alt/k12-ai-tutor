@@ -3,9 +3,8 @@
  */
 import { HomeworkManager } from '../../homework-orchestrator/src/homework-manager';
 import { OralRecordingService } from '../../oral-recording/src';
-import {
-  recordDailyCheckIn,
-} from '../../habit-tracker/src';
+import { recordDailyCheckIn } from '../../habit-tracker/src';
+import { ReportGenerator } from '../../parent-report/src/report-generator';
 
 const CHILD_ID = 'xiaoming';
 
@@ -84,10 +83,35 @@ export function seedHabitStreak() {
   console.log(`  🔥 预置打卡: 连续7天`);
 }
 
-export function seedAllData(homeworkMgr: HomeworkManager, oralSvc: OralRecordingService) {
+export function seedReportEvents(gen: ReportGenerator) {
+  // Seed 7 days of learning events for realistic weekly report
+  for (let d = 7; d >= 1; d--) {
+    const date = daysAgo(d);
+    // Math grading
+    gen.recordEvent({ childId: CHILD_ID, timestamp: new Date(date.getTime()), source: 'grading', subject: 'math',
+      metrics: { duration: 1200, correctCount: 6 + Math.min(d, 4), totalCount: 10, errorTypes: d <= 3 ? ['计算错误', '退位错误'] : [], knowledgePoints: d <= 3 ? ['减法退位', '两位数加减法'] : ['加法'] } });
+    // Chinese dictation
+    gen.recordEvent({ childId: CHILD_ID, timestamp: new Date(date.getTime() + 3600000), source: 'dictation', subject: 'chinese',
+      metrics: { duration: 600, correctCount: 7 + Math.min(d, 3), totalCount: 10, errorTypes: d <= 2 ? ['形近字错误'] : [], knowledgePoints: ['生字词'], score: 70 + d * 3 } });
+    // English recitation
+    if (d % 2 === 0) {
+      gen.recordEvent({ childId: CHILD_ID, timestamp: new Date(date.getTime() + 7200000), source: 'recitation', subject: 'english',
+        metrics: { duration: 300, score: 75 + d * 2 } });
+    }
+    // AI lecture (correction)
+    if (d >= 3) {
+      gen.recordEvent({ childId: CHILD_ID, timestamp: new Date(date.getTime() + 5400000), source: 'ai_lecture', subject: 'math',
+        metrics: { duration: 300, aiLectureWatched: true } });
+    }
+  }
+  console.log(`  📊 预置学情事件: 7天学习数据（数学+语文+英语）`);
+}
+
+export function seedAllData(homeworkMgr: HomeworkManager, oralSvc: OralRecordingService, reportGen?: ReportGenerator) {
   console.log('\n  📦 正在预置真实数据...');
   seedHomework(homeworkMgr);
   seedOralRecordings(oralSvc);
   seedHabitStreak();
+  if (reportGen) seedReportEvents(reportGen);
   console.log('  ✅ 数据预置完成\n');
 }

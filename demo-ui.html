@@ -90,7 +90,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 <script>
 // ===== STATE =====
-const S={tab:'home',sub:{chinese:'dictation',math:'quiz',english:'dialogue',manage:'errors',parent:'notifs'},
+const S={tab:'home',sub:{chinese:'dictation',math:'quiz',english:'dialogue',manage:'errors',parent:'report'},
 grade:4,streak:7,mStep:0,mRes:[],dPhase:'ready',dStep:0,dRes:[],ePhase:'select',eTurn:0,eScn:null,
 rPhase:'list',rStep:0,fPhase:'ready',fRound:1,fFocus:true,fSec:600,fTid:null,
 omPhase:'ready',omStep:0,omRes:[],hToday:false,pcSit:null,wEval:null,fsSession:null,fsWords:[],feynmanSession:null,
@@ -519,13 +519,19 @@ return `<div style="display:flex;align-items:center;gap:8px;margin:4px 0"><span 
 }
 // ===== TAB 8: PARENT =====
 function rParent(){
-const subs=[{id:'notifs',em:'🔔',nm:'通知消息',ds:'实时推送'},{id:'parenting',em:'🧠',nm:'育儿模式',ds:'5种模式'},{id:'coaching',em:'💬',nm:'陪辅话术',ds:'正确示范'},{id:'interact',em:'👨‍👧',nm:'亲子互动',ds:'互动任务'},{id:'tutorials',em:'📚',nm:'辅导教程',ds:'极简教程'},{id:'summary',em:'📋',nm:'作业摘要',ds:'每日汇总'}];
+const subs=[{id:'report',em:'📊',nm:'学情报告',ds:'日报+周报'},{id:'notifs',em:'🔔',nm:'通知消息',ds:'实时推送'},{id:'parenting',em:'🧠',nm:'育儿模式',ds:'5种模式'},{id:'coaching',em:'💬',nm:'陪辅话术',ds:'正确示范'},{id:'interact',em:'👨‍👧',nm:'亲子互动',ds:'互动任务'},{id:'tutorials',em:'📚',nm:'辅导教程',ds:'极简教程'},{id:'summary',em:'📋',nm:'作业摘要',ds:'每日汇总'}];
 let h=`<div class="cd" style="background:linear-gradient(135deg,#EEF2FF,#F5F3FF);border:none;text-align:center;padding:12px">
 <div style="font-size:20px">👨</div><div style="font-size:14px;font-weight:600">家长端 · 只读模式</div></div>`;
 h+=subNav('parent',subs);
-const fn={notifs:rNotifs,parenting:rParenting,coaching:rCoaching,interact:rInteract,tutorials:rTutorials,summary:rSummary};
+const fn={report:rReport,notifs:rNotifs,parenting:rParenting,coaching:rCoaching,interact:rInteract,tutorials:rTutorials,summary:rSummary};
 h+=(fn[S.sub.parent]||rNotifs)();
 return h;
+}
+function rReport(){
+return `<div class="cd"><div class="tt">📊 学情报告</div>
+<div class="sg"><div class="si" style="cursor:pointer" onclick="loadDailyReport()"><div class="v">📅</div><div class="l">今日快照</div></div>
+<div class="si" style="cursor:pointer" onclick="loadWeeklyReport()"><div class="v">📊</div><div class="l">本周报告</div></div></div></div>
+<div id="reportResult"></div>`;
 }
 function rNotifs(){
 return `<div class="cd"><div class="tt">🔔 通知消息</div>
@@ -779,6 +785,56 @@ try{
   S.feynmanSession.isComplete=true;
   showStatus('教学完成（本地模式）',false);}
 R();}
+
+// ===== Report Actions =====
+async function loadDailyReport(){
+const today=new Date().toISOString().slice(0,10);
+try{
+  const r=await get('/report/daily/xiaoming/'+today);
+  if(!r.hasData){document.getElementById('reportResult').innerHTML='<div class="cd" style="text-align:center;color:var(--g5);padding:20px">📅 今日暂无学习数据</div>';return;}
+  document.getElementById('reportResult').innerHTML=`
+  <div class="cd"><div class="tt">📅 ${r.date} · 小明的学习快照</div>
+  <div class="sg3"><div class="si"><div class="v">${r.totalMinutes}</div><div class="l">分钟</div></div>
+  <div class="si"><div class="v">${r.totalQuestions}</div><div class="l">题数</div></div>
+  <div class="si"><div class="v" style="color:${r.overallAccuracy>=80?'var(--s)':'var(--w)'}">${r.overallAccuracy}%</div><div class="l">正确率</div></div></div>
+  ${r.completedTasks.map(t=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--g1);font-size:13px">
+  <span>${t.title}</span>${t.accuracy!==undefined?`<span class="b ${t.accuracy>=80?'b-s':'b-w'}">${t.accuracy}%</span>`:(t.score?`<span class="b b-p">${t.score}分</span>`:'')}</div>`).join('')}
+  ${r.dailyHighlight?`<div class="nt ns" style="margin-top:8px;font-size:13px">💡 ${r.dailyHighlight}</div>`:''}</div>`;
+  showStatus('日报告已生成');
+}catch(e){document.getElementById('reportResult').innerHTML='<div class="nt nw">后端未连接</div>';}}
+
+async function loadWeeklyReport(){
+document.getElementById('reportResult').innerHTML='<div class="cd" style="text-align:center;padding:20px">⏳ 生成周报告中...</div>';
+try{
+  const r=await post('/report/weekly',{childId:'xiaoming',childName:'小明',gradeBand:gband()});
+  const o=r.overview,subs=r.subjects,plan=r.plan;
+  document.getElementById('reportResult').innerHTML=`
+  <div class="cd"><div class="tt">📊 小明 · 第${r.weekNumber}周学习报告</div>
+  <div style="font-size:12px;color:var(--g5)">${r.dateRange.start} ~ ${r.dateRange.end}</div>
+  <div class="sg3" style="margin-top:12px">
+  <div class="si"><div class="v">${o.completionRate}%</div><div class="l">完成率${o.completionRateDelta>0?'↑'+o.completionRateDelta+'%':o.completionRateDelta<0?'↓'+Math.abs(o.completionRateDelta)+'%':''}</div></div>
+  <div class="si"><div class="v">${o.totalMinutes}</div><div class="l">总时长(分)</div></div>
+  <div class="si"><div class="v" style="color:${o.overallAccuracy>=80?'var(--s)':'var(--w)'}">${o.overallAccuracy}%</div><div class="l">正确率${o.accuracyDelta>0?'↑'+o.accuracyDelta:o.accuracyDelta<0?'↓'+Math.abs(o.accuracyDelta):''}</div></div></div>
+  <div style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0">${o.behaviorTags.map(t=>`<span class="b ${t.type==='positive'?'b-s':'b-d'}">${t.type==='positive'?'✅':'⚠️'} ${t.text}</span>`).join('')}</div></div>
+  ${o.weakPointsTop3.length?`<div class="cd"><div class="tt">🔴 薄弱知识点 TOP${o.weakPointsTop3.length}</div>
+  ${o.weakPointsTop3.map((w,i)=>`<div style="padding:6px 0;border-bottom:1px solid var(--g1);font-size:13px">
+  <strong>${i+1}.</strong> ${w.subject==='chinese'?'语文':w.subject==='math'?'数学':'英语'} · ${w.point} <span style="color:var(--g5);font-size:12px">${w.detail}</span></div>`).join('')}</div>`:''}
+  ${o.progressHighlights.length?`<div class="cd"><div class="tt">📈 本周进步</div>
+  ${o.progressHighlights.map(h=>`<div class="nt ns" style="font-size:12px">🌟 ${h}</div>`).join('')}</div>`:''}
+  ${subs.map(s=>`<div class="cd"><div class="tt">${s.subject==='chinese'?'📖':s.subject==='math'?'🔢':'🌍'} ${s.subjectLabel}</div>
+  <div style="font-size:13px">正确率 <strong>${s.accuracy}%</strong> · 错题 <strong>${s.totalErrors}</strong>道 · 主因: <span class="b b-w">${s.dominantErrorCause}</span></div>
+  ${s.dictationAccuracy!==undefined?`<div style="font-size:12px;color:var(--g5);margin-top:4px">听写正确率: ${s.dictationAccuracy}%</div>`:''}
+  ${s.recitationScore!==undefined?`<div style="font-size:12px;color:var(--g5)">背诵评分: ${s.recitationScore}分</div>`:''}
+  <div style="font-size:12px;color:var(--p);margin-top:4px">💊 ${s.remediation}</div></div>`).join('')}
+  <div class="cd"><div class="tt">🎯 下周规划</div>
+  <div style="font-size:14px;font-weight:600;color:var(--p);margin-bottom:8px">${plan.coreGoal}</div>
+  <div style="font-size:12px;color:var(--g5);margin-bottom:8px">每日约${plan.totalDailyMinutes}分钟</div>
+  ${plan.tasks.map(t=>`<div style="padding:8px;border-bottom:1px solid var(--g1)">
+  <div style="font-size:13px;font-weight:600">${t.title} <span class="b b-p">${t.frequency} · ${t.duration}</span></div>
+  <div style="font-size:12px;color:var(--g5)">${t.description}</div>
+  <div style="font-size:11px;color:var(--p);margin-top:2px">📍 ${t.appEntry}${t.targetMetric?' · 🎯 '+t.targetMetric:''}</div></div>`).join('')}</div>`;
+  showStatus('周报告已生成');
+}catch(e){document.getElementById('reportResult').innerHTML='<div class="nt nw">后端未连接</div>';}}
 
 // ===== Health Content Actions =====
 async function loadHealthContent(){

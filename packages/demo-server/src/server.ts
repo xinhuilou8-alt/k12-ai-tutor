@@ -57,6 +57,9 @@ import { EnhancedFeynmanModule } from '../../feynman-engine/src/feynman-enhanced
 // ── Volcano TTS ──
 import { volcanoSynthesize } from '../../tts-engine/src/providers/volcano-provider';
 
+// ── Parent Report ──
+import { ReportGenerator } from '../../parent-report/src/report-generator';
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -74,10 +77,11 @@ const multiSolutionService = new MultiSolutionService();
 const previewService = new PreviewService();
 const homeworkMgr = new HomeworkManager();
 const feynmanEnhanced = new EnhancedFeynmanModule();
+const reportGen = new ReportGenerator();
 
 // ── Seed realistic data ──
 import { seedAllData } from './seed-data';
-seedAllData(homeworkMgr, oralService);
+seedAllData(homeworkMgr, oralService, reportGen);
 
 // ════════════════════════════════════════
 // 1. 作业分类
@@ -550,6 +554,27 @@ app.get('/api/feynman/score/:sessionId', (req, res) => {
 app.get('/api/feynman/state/:sessionId', (req, res) => {
   try { res.json(feynmanEnhanced.getSessionState(req.params.sessionId)); }
   catch (e: any) { res.status(400).json({ error: e.message }); }
+});
+
+// ════════════════════════════════════════
+// 21. 家长学情报告
+// ════════════════════════════════════════
+app.post('/api/report/event', (req, res) => {
+  try { reportGen.recordEvent(req.body); res.json({ ok: true }); }
+  catch (e: any) { res.status(400).json({ error: e.message }); }
+});
+
+app.get('/api/report/daily/:childId/:date', (req, res) => {
+  res.json(reportGen.generateDailySnapshot(req.params.childId, req.params.date));
+});
+
+app.post('/api/report/weekly', (req, res) => {
+  const { childId, childName, weekEndDate, gradeBand } = req.body;
+  res.json(reportGen.generateWeeklyReport(childId, childName, new Date(weekEndDate || Date.now()), gradeBand));
+});
+
+app.get('/api/report/anomalies/:childId', (req, res) => {
+  res.json(reportGen.checkAnomalies(req.params.childId));
 });
 
 // ════════════════════════════════════════
