@@ -912,23 +912,23 @@ try{
   ${o.progressHighlights.length?`<div class="cd" style="background:linear-gradient(135deg,#ECFDF5,#F0FDF4);border:1px solid #BBF7D0"><div class="tt" style="color:#065F46">📈 本周进步</div>
   ${o.progressHighlights.map(h=>`<div style="padding:6px 0;font-size:13px;color:#065F46">🌟 ${h}</div>`).join('')}</div>`:''}
 
-  <div style="display:flex;gap:8px">
-  ${o.weakPointsTop3.length?`<div class="cd" style="flex:1;margin:0"><div class="tt" style="color:var(--d)">🔴 薄弱知识点</div>
+  <div class="cd"><div style="display:flex;gap:12px">
+  ${o.weakPointsTop3.length?`<div style="flex:1"><div class="tt" style="color:var(--d)">🔴 薄弱知识点</div>
   ${o.weakPointsTop3.map((w,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid var(--g1)">
   <span style="font-size:16px;font-weight:700;color:var(--d)">${i+1}</span>
   <div style="flex:1"><div style="font-size:13px;font-weight:600">${w.subject==='chinese'?'语文':w.subject==='math'?'数学':'英语'} · ${w.point}</div>
   <div style="font-size:11px;color:var(--g5)">${w.detail}</div></div></div>`).join('')}</div>`:''}
-  ${topErrors.length?`<div class="cd" style="flex:1;margin:0"><div class="tt" style="color:var(--w)">🔍 错因追踪 TOP3</div>
+  ${topErrors.length?`<div style="flex:1;border-left:1px solid var(--g1);padding-left:12px"><div class="tt" style="color:var(--w)">🔍 错因追踪 TOP3</div>
   ${topErrors.map(([type,count],i)=>{const pct=Math.round(count/topErrors.reduce((s,e)=>s+e[1],0)*100);
   return `<div style="padding:8px;border-bottom:1px solid var(--g1)">
   <div style="display:flex;justify-content:space-between;align-items:center">
   <div style="font-size:13px;font-weight:600">${i+1}. ${type}</div>
   <span style="font-size:12px;color:var(--g5)">${count}次</span></div>
   <div style="margin-top:4px;height:6px;background:var(--g1);border-radius:3px;overflow:hidden">
-  <div style="height:100%;width:${pct}%;background:${i===0?'var(--d)':i===1?'var(--w)':'var(--g4)'};border-radius:3px"></div></div></div>`;}).join('')}</div>`:''}</div>
+  <div style="height:100%;width:${pct}%;background:${i===0?'var(--d)':i===1?'var(--w)':'var(--g4)'};border-radius:3px"></div></div></div>`;}).join('')}</div>`:''}</div></div>
 
-  <div style="display:flex;gap:8px;overflow-x:auto">
-  ${subs.map(s=>`<div class="cd" style="flex:1;min-width:0;margin:0">
+  <div class="cd"><div class="tt">📚 分科详情</div><div style="display:flex;gap:10px">
+  ${subs.map(s=>`<div style="flex:1;min-width:0;padding:10px;background:var(--g50);border-radius:10px">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
   <div style="font-size:13px;font-weight:600">${s.subject==='chinese'?'📖':s.subject==='math'?'🔢':'🌍'} ${s.subjectLabel}</div>
   <span class="b ${s.accuracy>=80?'b-s':s.accuracy>=60?'b-w':'b-d'}" style="font-size:11px">${s.accuracy}%</span></div>
@@ -936,7 +936,7 @@ try{
   ${s.weakPoints.length?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin:4px 0">${s.weakPoints.slice(0,3).map(w=>`<span class="b b-d" style="font-size:10px">${w}</span>`).join('')}</div>`:''}
   ${s.dictationAccuracy!==undefined?`<div style="font-size:11px;margin-top:2px">📝 听写${s.dictationAccuracy}%</div>`:''}
   ${s.recitationScore!==undefined?`<div style="font-size:11px">🎤 背诵${s.recitationScore}分</div>`:''}
-  <div style="font-size:11px;color:var(--p);margin-top:6px;padding:6px;background:var(--pl);border-radius:6px">💊 ${s.remediation}</div></div>`).join('')}</div>
+  <div style="font-size:11px;color:var(--p);margin-top:6px;padding:6px;background:var(--pl);border-radius:6px">💊 ${s.remediation}</div></div>`).join('')}</div></div>
 
   <div class="cd" style="border:2px solid var(--p)"><div class="tt" style="color:var(--p)">🎯 下周规划</div>
   <div style="font-size:14px;font-weight:600;margin-bottom:8px">${plan.coreGoal}</div>
