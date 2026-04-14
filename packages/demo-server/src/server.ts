@@ -568,6 +568,10 @@ app.get('/api/report/daily/:childId/:date', (req, res) => {
   res.json(reportGen.generateDailySnapshot(req.params.childId, req.params.date));
 });
 
+app.get('/api/report/daily-insights/:childId/:date', (req, res) => {
+  res.json(reportGen.getDailyInsights(req.params.childId, req.params.date));
+});
+
 app.post('/api/report/weekly', (req, res) => {
   const { childId, childName, weekEndDate, gradeBand } = req.body;
   res.json(reportGen.generateWeeklyReport(childId, childName, new Date(weekEndDate || Date.now()), gradeBand));

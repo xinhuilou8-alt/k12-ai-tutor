@@ -84,6 +84,34 @@ export function seedHabitStreak() {
 }
 
 export function seedReportEvents(gen: ReportGenerator) {
+  // ── 3-4周前的历史数据（用于触发 memory-based insights） ──
+  // 3周前：数学正确率较低（50%），减法退位反复出错
+  for (let d = 0; d < 5; d++) {
+    const date = daysAgo(21 + d);
+    gen.recordEvent({ childId: CHILD_ID, timestamp: new Date(date.getTime()), source: 'grading', subject: 'math',
+      metrics: { duration: 1200, correctCount: 5, totalCount: 10, errorTypes: ['退位错误', '计算错误'], knowledgePoints: ['减法退位', '两位数加减法'] } });
+    gen.recordEvent({ childId: CHILD_ID, timestamp: new Date(date.getTime() + 3600000), source: 'dictation', subject: 'chinese',
+      metrics: { duration: 600, correctCount: 6, totalCount: 10, errorTypes: ['形近字错误'], knowledgePoints: ['生字词'], score: 60 + d * 2 } });
+    if (d % 2 === 0) {
+      gen.recordEvent({ childId: CHILD_ID, timestamp: new Date(date.getTime() + 7200000), source: 'recitation', subject: 'chinese',
+        metrics: { duration: 300, score: 65 + d * 2 } });
+    }
+  }
+
+  // 2周前：开始进步，减法退位仍偶尔出错
+  for (let d = 0; d < 5; d++) {
+    const date = daysAgo(14 + d);
+    gen.recordEvent({ childId: CHILD_ID, timestamp: new Date(date.getTime()), source: 'grading', subject: 'math',
+      metrics: { duration: 1100, correctCount: 6 + Math.min(d, 2), totalCount: 10, errorTypes: d < 2 ? ['退位错误'] : [], knowledgePoints: d < 2 ? ['减法退位'] : ['加法'] } });
+    gen.recordEvent({ childId: CHILD_ID, timestamp: new Date(date.getTime() + 3600000), source: 'dictation', subject: 'chinese',
+      metrics: { duration: 550, correctCount: 7 + Math.min(d, 2), totalCount: 10, knowledgePoints: ['生字词'], score: 70 + d * 2 } });
+    if (d % 2 === 0) {
+      gen.recordEvent({ childId: CHILD_ID, timestamp: new Date(date.getTime() + 7200000), source: 'recitation', subject: 'chinese',
+        metrics: { duration: 280, score: 75 + d * 2 } });
+    }
+  }
+
+  // ── 本周7天数据（正确率明显提升） ──
   // Seed 7 days of learning events for realistic weekly report
   for (let d = 7; d >= 1; d--) {
     const date = daysAgo(d);

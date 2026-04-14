@@ -6,9 +6,11 @@ import {
   WeeklyPlan,
   PlanTask,
   AnomalyAlert,
+  MemoryInsight,
   SubjectType,
   GradeBand,
 } from './types';
+import { InsightEngine } from './insight-engine';
 
 // ===== Constants =====
 
@@ -86,6 +88,7 @@ function previousWeekRange(weekEndDate: Date): { start: Date; end: Date } {
 
 export class ReportGenerator {
   private events: Map<string, LearningEvent[]> = new Map();
+  private insightEngine = new InsightEngine();
 
   // ---------- Event storage ----------
 
@@ -98,6 +101,16 @@ export class ReportGenerator {
   getEventsByDateRange(childId: string, start: Date, end: Date): LearningEvent[] {
     const all = this.events.get(childId) ?? [];
     return all.filter(e => e.timestamp >= start && e.timestamp <= end);
+  }
+
+  // ---------- Daily Insights ----------
+
+  getDailyInsights(childId: string, date: string): MemoryInsight[] {
+    const dayStart = new Date(`${date}T00:00:00`);
+    const dayEnd = new Date(`${date}T23:59:59.999`);
+    const todayEvents = this.getEventsByDateRange(childId, dayStart, dayEnd);
+    const allEvents = this.events.get(childId) ?? [];
+    return this.insightEngine.generateDailyInsights(todayEvents, allEvents, dayEnd);
   }
 
   // ---------- Daily Snapshot ----------
@@ -182,6 +195,10 @@ export class ReportGenerator {
     const subjects = this.buildSubjectDetails(events);
     const plan = this.buildWeeklyPlan(subjects, gradeBand);
 
+    // Generate memory-based insights from full history
+    const allEvents = this.events.get(childId) ?? [];
+    const insights = this.insightEngine.generateInsights(allEvents, weekEndDate);
+
     return {
       childId,
       childName,
@@ -190,6 +207,7 @@ export class ReportGenerator {
       overview,
       subjects,
       plan,
+      insights: insights.length > 0 ? insights : undefined,
       generatedAt: new Date(),
     };
   }

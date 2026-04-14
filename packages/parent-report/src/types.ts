@@ -75,6 +75,8 @@ export interface WeeklyReport {
   plan: WeeklyPlan;
   // Module 4: Last week plan review
   lastWeekReview?: PlanReview;
+  // Module 5: Memory-based insights (非必须，有洞察时才有值)
+  insights?: MemoryInsight[];
   generatedAt: Date;
 }
 
@@ -96,6 +98,30 @@ export interface PlanTask {
 export interface PlanReview {
   tasks: { title: string; status: 'completed' | 'partial' | 'not_started'; detail: string }[];
   overallProgress: string;
+}
+
+// ===== Memory-based Insight (个性化洞察) =====
+
+export type InsightCategory = 'recurring_error' | 'milestone_progress' | 'knowledge_link';
+
+export interface MemoryInsight {
+  category: InsightCategory;
+  subject: SubjectType;
+  /** 家长视角的中性措辞 */
+  parentMessage: string;
+  /** 孩子视角的鼓励措辞（可选，用于直接面向孩子的场景） */
+  childMessage?: string;
+  /** 关联的知识点 */
+  knowledgePoint: string;
+  /** 洞察的时间跨度描述，如"近2周" */
+  timeSpan: string;
+  /** 具体数据支撑 */
+  evidence: {
+    occurrences?: number;       // 重复犯错次数
+    previousValue?: number;     // 之前的值（用于进步对比）
+    currentValue?: number;      // 当前的值
+    relatedTopic?: string;      // 关联的旧知识/旧作文题目
+  };
 }
 
 // Anomaly alert

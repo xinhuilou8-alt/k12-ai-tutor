@@ -869,13 +869,36 @@ document.getElementById('mvpDailyResult').innerHTML=`
   return `<div style="display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid var(--g1)">
   <span style="font-size:16px">${icon}</span>
   <div style="flex:1;font-size:13px">${t.title}</div>${acc}${sc}</div>`;}).join('')}</div>
-${r.dailyHighlight?`<div style="margin-top:12px;padding:10px;background:var(--sl);border-radius:8px;font-size:13px;color:#065F46">💡 ${r.dailyHighlight}</div>`:''}</div>`;}
+${r.dailyHighlight?`<div style="margin-top:12px;padding:10px;background:var(--sl);border-radius:8px;font-size:13px;color:#065F46">💡 ${r.dailyHighlight}</div>`:''}</div>`;
+// Load daily insights asynchronously
+try{
+  const ins=await get('/report/daily-insights/xiaoming/'+today);
+  if(ins&&ins.length){
+    document.getElementById('mvpDailyResult').innerHTML+=`
+    <div class="cd" style="border:2px solid #8B5CF6"><div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+    <span style="font-size:16px">🧠</span><span style="font-size:14px;font-weight:600;color:#8B5CF6">个性化洞察</span></div>
+    <div style="font-size:11px;color:var(--g5);margin-bottom:8px">基于今日表现 + 历史学习记忆</div>
+    ${ins.map(i=>`<div style="padding:10px;background:${i.category==='milestone_progress'?'#ECFDF5':i.category==='knowledge_link'?'#EFF6FF':'#FEF2F2'};border-radius:8px;margin-bottom:6px;border-left:3px solid ${i.category==='milestone_progress'?'#10B981':i.category==='knowledge_link'?'#3B82F6':'#EF4444'}">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+    <span style="font-size:14px">${i.category==='milestone_progress'?'🌟':i.category==='knowledge_link'?'🔗':'🔄'}</span>
+    <span class="b ${i.category==='milestone_progress'?'b-s':i.category==='knowledge_link'?'b-p':'b-d'}" style="font-size:10px">${i.category==='milestone_progress'?'阶段进步':i.category==='knowledge_link'?'知识关联':'重复薄弱点'}</span>
+    <span style="font-size:10px;color:var(--g5)">${i.timeSpan}</span></div>
+    <div style="font-size:13px;line-height:1.5">${i.parentMessage}</div></div>`).join('')}</div>`;
+  }
+}catch(e){/* insights are optional */}
+}
 
 async function loadMvpWeekly(){
 document.getElementById('mvpWeeklyResult').innerHTML='<div class="cd" style="text-align:center;padding:20px;color:var(--g5)">⏳ 生成周报告中...</div>';
 try{
   const r=await post('/report/weekly',{childId:'xiaoming',childName:'小明',gradeBand:gband()});
   const o=r.overview,subs=r.subjects,plan=r.plan;
+
+  // 错因追踪 top3：汇总所有学科的 errorDistribution
+  const errMap={};
+  subs.forEach(s=>(s.errorDistribution||[]).forEach(e=>{errMap[e.type]=(errMap[e.type]||0)+e.count;}));
+  const topErrors=Object.entries(errMap).sort((a,b)=>b[1]-a[1]).slice(0,3);
+
   document.getElementById('mvpWeeklyResult').innerHTML=`
   <div class="cd"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
   <div style="font-size:14px;font-weight:600">📊 第${r.weekNumber}周报告</div>
@@ -886,23 +909,34 @@ try{
   <div class="si"><div class="v" style="color:${o.overallAccuracy>=80?'var(--s)':'var(--w)'}">${o.overallAccuracy}%</div><div class="l">正确率${o.accuracyDelta>0?' ↑'+o.accuracyDelta:o.accuracyDelta<0?' ↓'+Math.abs(o.accuracyDelta):''}</div></div></div>
   <div style="display:flex;flex-wrap:wrap;gap:6px;margin:10px 0">${o.behaviorTags.map(t=>`<span class="b ${t.type==='positive'?'b-s':'b-d'}">${t.type==='positive'?'✅':'⚠️'} ${t.text}</span>`).join('')}</div></div>
 
-  ${o.weakPointsTop3.length?`<div class="cd"><div class="tt" style="color:var(--d)">🔴 薄弱知识点</div>
+  ${o.progressHighlights.length?`<div class="cd" style="background:linear-gradient(135deg,#ECFDF5,#F0FDF4);border:1px solid #BBF7D0"><div class="tt" style="color:#065F46">📈 本周进步</div>
+  ${o.progressHighlights.map(h=>`<div style="padding:6px 0;font-size:13px;color:#065F46">🌟 ${h}</div>`).join('')}</div>`:''}
+
+  <div style="display:flex;gap:8px">
+  ${o.weakPointsTop3.length?`<div class="cd" style="flex:1;margin:0"><div class="tt" style="color:var(--d)">🔴 薄弱知识点</div>
   ${o.weakPointsTop3.map((w,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid var(--g1)">
   <span style="font-size:16px;font-weight:700;color:var(--d)">${i+1}</span>
   <div style="flex:1"><div style="font-size:13px;font-weight:600">${w.subject==='chinese'?'语文':w.subject==='math'?'数学':'英语'} · ${w.point}</div>
   <div style="font-size:11px;color:var(--g5)">${w.detail}</div></div></div>`).join('')}</div>`:''}
+  ${topErrors.length?`<div class="cd" style="flex:1;margin:0"><div class="tt" style="color:var(--w)">🔍 错因追踪 TOP3</div>
+  ${topErrors.map(([type,count],i)=>{const pct=Math.round(count/topErrors.reduce((s,e)=>s+e[1],0)*100);
+  return `<div style="padding:8px;border-bottom:1px solid var(--g1)">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+  <div style="font-size:13px;font-weight:600">${i+1}. ${type}</div>
+  <span style="font-size:12px;color:var(--g5)">${count}次</span></div>
+  <div style="margin-top:4px;height:6px;background:var(--g1);border-radius:3px;overflow:hidden">
+  <div style="height:100%;width:${pct}%;background:${i===0?'var(--d)':i===1?'var(--w)':'var(--g4)'};border-radius:3px"></div></div></div>`;}).join('')}</div>`:''}</div>
 
-  ${o.progressHighlights.length?`<div class="cd"><div class="tt" style="color:var(--s)">📈 本周进步</div>
-  ${o.progressHighlights.map(h=>`<div style="padding:6px 0;font-size:13px;color:#065F46">🌟 ${h}</div>`).join('')}</div>`:''}
-
-  ${subs.map(s=>`<div class="cd"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-  <div class="tt" style="margin-bottom:0">${s.subject==='chinese'?'📖':s.subject==='math'?'🔢':'🌍'} ${s.subjectLabel}</div>
-  <span class="b ${s.accuracy>=80?'b-s':s.accuracy>=60?'b-w':'b-d'}">${s.accuracy}%</span></div>
-  <div style="font-size:12px;color:var(--g5)">错题${s.totalErrors}道 · 主因: <span class="b b-w">${s.dominantErrorCause}</span></div>
-  ${s.weakPoints.length?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin:6px 0">${s.weakPoints.map(w=>`<span class="b b-d" style="font-size:11px">${w}</span>`).join('')}</div>`:''}
-  ${s.dictationAccuracy!==undefined?`<div style="font-size:12px;margin-top:4px">📝 听写: ${s.dictationAccuracy}%</div>`:''}
-  ${s.recitationScore!==undefined?`<div style="font-size:12px">🎤 背诵: ${s.recitationScore}分</div>`:''}
-  <div style="font-size:12px;color:var(--p);margin-top:6px;padding:8px;background:var(--pl);border-radius:6px">💊 ${s.remediation}</div></div>`).join('')}
+  <div style="display:flex;gap:8px;overflow-x:auto">
+  ${subs.map(s=>`<div class="cd" style="flex:1;min-width:0;margin:0">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+  <div style="font-size:13px;font-weight:600">${s.subject==='chinese'?'📖':s.subject==='math'?'🔢':'🌍'} ${s.subjectLabel}</div>
+  <span class="b ${s.accuracy>=80?'b-s':s.accuracy>=60?'b-w':'b-d'}" style="font-size:11px">${s.accuracy}%</span></div>
+  <div style="font-size:11px;color:var(--g5)">错${s.totalErrors}题 · ${s.dominantErrorCause}</div>
+  ${s.weakPoints.length?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin:4px 0">${s.weakPoints.slice(0,3).map(w=>`<span class="b b-d" style="font-size:10px">${w}</span>`).join('')}</div>`:''}
+  ${s.dictationAccuracy!==undefined?`<div style="font-size:11px;margin-top:2px">📝 听写${s.dictationAccuracy}%</div>`:''}
+  ${s.recitationScore!==undefined?`<div style="font-size:11px">🎤 背诵${s.recitationScore}分</div>`:''}
+  <div style="font-size:11px;color:var(--p);margin-top:6px;padding:6px;background:var(--pl);border-radius:6px">💊 ${s.remediation}</div></div>`).join('')}</div>
 
   <div class="cd" style="border:2px solid var(--p)"><div class="tt" style="color:var(--p)">🎯 下周规划</div>
   <div style="font-size:14px;font-weight:600;margin-bottom:8px">${plan.coreGoal}</div>
@@ -912,9 +946,40 @@ try{
   <div style="font-size:13px;font-weight:600">${i+1}. ${t.title}</div>
   <span class="b b-p">${t.frequency} · ${t.duration}</span></div>
   <div style="font-size:12px;color:var(--g5);margin-top:4px">${t.description}</div>
-  <div style="font-size:11px;color:var(--p);margin-top:4px">📍 ${t.appEntry}${t.targetMetric?' · 🎯 '+t.targetMetric:''}</div></div>`).join('')}</div>`;
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+  <div style="font-size:11px;color:var(--p)">📍 ${t.appEntry}${t.targetMetric?' · 🎯 '+t.targetMetric:''}</div>
+  <button onclick="generatePlanTask(${i},'${t.title.replace(/'/g,"\\'")}','${(t.description||'').replace(/'/g,"\\'")}','${t.appEntry.replace(/'/g,"\\'")}','${(t.targetMetric||'').replace(/'/g,"\\'")}')" style="padding:4px 10px;font-size:11px;background:var(--p);color:#fff;border:none;border-radius:6px;cursor:pointer;white-space:nowrap">📋 生成任务</button>
+  </div></div>`).join('')}</div>`;
   showStatus('周报告已生成');
 }catch(e){document.getElementById('mvpWeeklyResult').innerHTML='<div class="nt nw">后端未连接</div>';}}
+
+function generatePlanTask(idx,title,desc,appEntry,targetMetric){
+  const btn=event.target;
+  btn.disabled=true;btn.textContent='⏳ 生成中...';
+  // 模拟生成任务资源（纯前端）
+  setTimeout(()=>{
+    const resources={
+      '语文听写巩固':{steps:['打开「语文→生字听写」','选择本周易错字词集','开始听写练习，每次10个词','完成后查看错词，重点记忆'],tips:'建议每天固定时间练习，形成习惯'},
+      '课文背诵打卡':{steps:['打开「语文→课文背诵」','选择本周要求背诵的课文段落','先跟读2遍，再尝试背诵','录音提交，查看评分反馈'],tips:'睡前背诵效果最好，第二天早上再复习一遍'},
+      '数学计算专项':{steps:['打开「数学→计算题批改」','选择两位数加减法混合运算','完成20道题，注意检查步骤','查看错题，重点关注退位计算'],tips:'做完后用手指遮住答案，自己验算一遍'},
+      '数学薄弱点攻克':{steps:['打开「数学→错题本→AI讲解」','选择本周错题进行重做','观看AI讲解视频','完成变式练习巩固'],tips:'先自己想5分钟，实在不会再看讲解'},
+      '英语单词听写':{steps:['打开「英语→单词听写」','选择Unit5单词集','听写10个单词','查看拼写错误，重点记忆'],tips:'可以用联想记忆法，把单词和图片关联起来'},
+      '英语口语练习':{steps:['打开「英语→口语跟读」','选择Unit5课文','跟读3遍，注意模仿语调','录音提交，查看发音评分'],tips:'大声朗读比默读效果好3倍'},
+      '每日学习打卡':{steps:['打开「首页→今日任务」','按顺序完成每项任务','完成后点击打卡'],tips:'每天坚持，积累学习习惯'}
+    };
+    const res=resources[title]||{steps:['打开对应功能模块','按照任务描述完成练习','查看结果反馈'],tips:'保持每日练习习惯'};
+    const container=btn.closest('div[style*="padding:10px"]');
+    const existing=container.querySelector('.task-resource');
+    if(existing){existing.remove();btn.textContent='📋 生成任务';btn.disabled=false;return;}
+    const html=`<div class="task-resource" style="margin-top:8px;padding:10px;background:#F5F3FF;border-radius:8px;border:1px solid #DDD6FE">
+    <div style="font-size:12px;font-weight:600;color:#7C3AED;margin-bottom:6px">📋 任务步骤</div>
+    ${res.steps.map((s,i)=>`<div style="font-size:12px;padding:3px 0;color:#374151"><span style="color:#7C3AED;font-weight:600">${i+1}.</span> ${s}</div>`).join('')}
+    <div style="margin-top:6px;padding:6px;background:#EDE9FE;border-radius:4px;font-size:11px;color:#6D28D9">💡 ${res.tips}</div>
+    ${appEntry?`<button onclick="showStatus('已跳转到: ${appEntry}')" style="margin-top:6px;width:100%;padding:6px;font-size:12px;background:#7C3AED;color:#fff;border:none;border-radius:6px;cursor:pointer">🚀 去完成任务</button>`:''}</div>`;
+    container.insertAdjacentHTML('beforeend',html);
+    btn.textContent='📋 收起任务';btn.disabled=false;
+  },600);
+}
 
 async function loadMvpSummary(){
 try{
