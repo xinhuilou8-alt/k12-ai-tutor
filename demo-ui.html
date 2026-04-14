@@ -937,18 +937,24 @@ try{
 
   <div class="cd"><div style="display:flex;gap:12px">
   ${o.weakPointsTop3.length?`<div style="flex:1"><div class="tt" style="color:var(--d)">🔴 薄弱知识点</div>
-  ${o.weakPointsTop3.map((w,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid var(--g1)">
+  ${o.weakPointsTop3.map((w,i)=>{const errRate=totalErrors>0?Math.round(parseInt((w.detail.match(/\\d+/)||['0'])[0])/totalErrors*100):0;
+  return `<div style="padding:8px;border-bottom:1px solid var(--g1)">
+  <div style="display:flex;align-items:center;gap:8px">
   <span style="font-size:16px;font-weight:700;color:var(--d)">${i+1}</span>
   <div style="flex:1"><div style="font-size:13px;font-weight:600">${w.subject==='chinese'?'语文':w.subject==='math'?'数学':'英语'} · ${w.point}</div>
-  <div style="font-size:11px;color:var(--g5)">${w.detail}</div></div></div>`).join('')}</div>`:''}
+  <div style="font-size:11px;color:var(--g5)">错题占比 ${errRate}%</div></div>
+  <button onclick="startKPPractice('${w.point.replace(/'/g,"\\'")}','${w.subject}')" style="padding:3px 8px;font-size:10px;background:#EF4444;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap">🏋️ 练习</button>
+  </div></div>`;}).join('')}</div>`:''}
   ${topErrors.length?`<div style="flex:1;border-left:1px solid var(--g1);padding-left:12px"><div class="tt" style="color:var(--w)">🔍 错因追踪 TOP3</div>
-  ${topErrors.map(([type,count],i)=>{const pct=Math.round(count/topErrors.reduce((s,e)=>s+e[1],0)*100);
+  ${topErrors.map(([type,count],i)=>{const pct=Math.round(count/totalErrors*100);
   return `<div style="padding:8px;border-bottom:1px solid var(--g1)">
   <div style="display:flex;justify-content:space-between;align-items:center">
   <div style="font-size:13px;font-weight:600">${i+1}. ${type}</div>
-  <span style="font-size:12px;color:var(--g5)">${count}次</span></div>
+  <span style="font-size:12px;color:var(--d)">${pct}%</span></div>
   <div style="margin-top:4px;height:6px;background:var(--g1);border-radius:3px;overflow:hidden">
-  <div style="height:100%;width:${pct}%;background:${i===0?'var(--d)':i===1?'var(--w)':'var(--g4)'};border-radius:3px"></div></div></div>`;}).join('')}</div>`:''}</div></div>
+  <div style="height:100%;width:${pct}%;background:${i===0?'var(--d)':i===1?'var(--w)':'var(--g4)'};border-radius:3px"></div></div>
+  <button onclick="startErrorCausePractice('${type.replace(/'/g,"\\'")}',${count})" style="margin-top:6px;padding:3px 8px;font-size:10px;background:var(--w);color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap">🔧 纠正练习</button>
+  </div>`;}).join('')}</div>`:''}</div></div>
 
   <div class="cd"><div class="tt">📚 分科详情</div><div style="display:flex;gap:10px">
   ${subs.map(s=>`<div style="flex:1;min-width:0;padding:10px;background:var(--g50);border-radius:10px">
@@ -975,6 +981,59 @@ try{
   </div></div>`).join('')}</div>`;
   showStatus('周报告已生成');
 }catch(e){document.getElementById('mvpWeeklyResult').innerHTML='<div class="nt nw">后端未连接</div>';}}
+
+function startKPPractice(kp,subject){
+  const subLabel=subject==='chinese'?'语文':subject==='math'?'数学':'英语';
+  const practices={
+    '减法退位':{title:'退位减法专项',questions:['63-27=?','82-45=?','100-36=?','71-28=?','90-54=?'],tip:'退位时先借1当10，再减'},
+    '两位数加减法':{title:'两位数混合运算',questions:['34+28-15=?','56-19+23=?','72+18-34=?','45-27+38=?'],tip:'先算加减，注意进退位'},
+    '运算顺序':{title:'运算顺序练习',questions:['3+4×2=?','(3+4)×2=?','12÷3+5=?','20-4×3=?'],tip:'先乘除后加减，有括号先算括号'},
+    '生字词':{title:'易错字词听写',questions:['听写：勇敢','听写：温暖','听写：知识','听写：美丽','听写：春天'],tip:'注意偏旁部首和笔画顺序'},
+    'Unit5单词':{title:'Unit5单词拼写',questions:['拼写：beautiful','拼写：wonderful','拼写：different','拼写：important'],tip:'注意元音字母组合'},
+  };
+  const p=practices[kp]||{title:kp+'专项练习',questions:[kp+'练习题1',kp+'练习题2',kp+'练习题3'],tip:'针对薄弱点反复练习'};
+  const modal=document.createElement('div');
+  modal.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:999';
+  modal.innerHTML='<div style="background:#fff;border-radius:16px;padding:20px;max-width:400px;width:90%;max-height:80vh;overflow-y:auto">'
+  +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">'
+  +'<div style="font-size:16px;font-weight:700">🏋️ '+p.title+'</div>'
+  +'<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer">✕</button></div>'
+  +'<div style="font-size:12px;color:var(--g5);margin-bottom:12px">'+subLabel+' · 知识点：'+kp+'</div>'
+  +'<div style="padding:8px;background:#FEF3C7;border-radius:8px;font-size:12px;margin-bottom:12px">💡 '+p.tip+'</div>'
+  +p.questions.map(function(q,i){return '<div style="padding:10px;background:var(--g50);border-radius:8px;margin-bottom:6px;display:flex;align-items:center;gap:8px">'
+  +'<span style="font-size:14px;font-weight:700;color:var(--p)">'+(i+1)+'</span>'
+  +'<div style="flex:1;font-size:13px">'+q+'</div>'
+  +'<input type="text" placeholder="作答" style="width:80px;padding:4px 8px;border:1px solid var(--g2);border-radius:6px;font-size:12px"></div>';}).join('')
+  +'<button onclick="showStatus(\'练习已提交\');this.closest(\'div[style*=fixed]\').remove()" style="margin-top:12px;width:100%;padding:10px;background:var(--p);color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer">✅ 提交练习</button></div>';
+  document.body.appendChild(modal);
+}
+
+function startErrorCausePractice(causeType,count){
+  var causeMap={
+    '退位错误':{title:'退位计算纠正',desc:'退位时容易忘记借位',exercises:['63-27=?（注意个位3<7需退位）','82-45=?（注意个位2<5需退位）','100-36=?（注意连续退位）'],method:'每次遇到减法，先比较个位大小，小的要退位借10'},
+    '计算错误':{title:'计算准确性训练',desc:'运算过程中出现笔误或进位遗漏',exercises:['47+38=?（注意进位）','156-89=?（注意退位）','23×4=?（注意进位）'],method:'做完后用逆运算验算'},
+    '审题不清':{title:'审题能力训练',desc:'没有准确理解题目条件',exercises:['小明走了3km，小红走了2倍，小红走了多少？','一根绳子剪3段需要剪几刀？','5个苹果每个3元，付20元找回多少？'],method:'读题时圈出关键数字和关键词'},
+    '形近字错误':{title:'形近字辨析',desc:'容易混淆字形相近的汉字',exercises:['辨析：己/已/巳','辨析：折/拆','辨析：辩/辨/辫'],method:'找出不同笔画，编口诀记忆'},
+    '拼写错误':{title:'易错单词拼写',desc:'字母顺序或元音拼写出错',exercises:['beautiful（注意eau）','Wednesday（注意dnes）','different（注意ff和ent）'],method:'按音节拆分记忆拼写'},
+    '运算顺序错误':{title:'运算顺序纠正',desc:'没有按先乘除后加减的顺序',exercises:['3+4×2=?','(3+4)×2=?','20-4×3=?'],method:'口诀：先括号，再乘除，后加减'},
+  };
+  var c=causeMap[causeType]||{title:causeType+'纠正练习',desc:'针对该错因专项训练',exercises:[causeType+'练习1',causeType+'练习2',causeType+'练习3'],method:'仔细审题，做完检查'};
+  var modal=document.createElement('div');
+  modal.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:999';
+  modal.innerHTML='<div style="background:#fff;border-radius:16px;padding:20px;max-width:400px;width:90%;max-height:80vh;overflow-y:auto">'
+  +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">'
+  +'<div style="font-size:16px;font-weight:700">🔧 '+c.title+'</div>'
+  +'<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer">✕</button></div>'
+  +'<div style="font-size:12px;color:var(--d);margin-bottom:8px">错因：'+causeType+'</div>'
+  +'<div style="font-size:12px;color:var(--g5);margin-bottom:12px">'+c.desc+'</div>'
+  +'<div style="padding:8px;background:#DBEAFE;border-radius:8px;font-size:12px;margin-bottom:12px;color:#1E40AF">🧠 纠正方法：'+c.method+'</div>'
+  +c.exercises.map(function(q,i){return '<div style="padding:10px;background:var(--g50);border-radius:8px;margin-bottom:6px;display:flex;align-items:center;gap:8px">'
+  +'<span style="font-size:14px;font-weight:700;color:var(--w)">'+(i+1)+'</span>'
+  +'<div style="flex:1;font-size:13px">'+q+'</div>'
+  +'<input type="text" placeholder="作答" style="width:80px;padding:4px 8px;border:1px solid var(--g2);border-radius:6px;font-size:12px"></div>';}).join('')
+  +'<button onclick="showStatus(\'纠正练习已提交\');this.closest(\'div[style*=fixed]\').remove()" style="margin-top:12px;width:100%;padding:10px;background:var(--w);color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer">✅ 提交练习</button></div>';
+  document.body.appendChild(modal);
+}
 
 function generatePlanTask(idx,title,desc,appEntry,targetMetric){
   const btn=event.target;
