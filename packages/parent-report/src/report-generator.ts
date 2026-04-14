@@ -18,6 +18,16 @@ const SUBJECT_LABELS: Record<SubjectType, string> = {
   english: '英语',
 };
 
+const SOURCE_LABELS: Record<string, string> = {
+  photo_search: '拍搜解题',
+  grading: '批改',
+  ai_lecture: 'AI讲题',
+  homework_assistant: '作业助手',
+  study_plan: '学习计划',
+  dictation: '听写',
+  recitation: '背诵/跟读',
+};
+
 const CARELESS_KEYWORDS = ['计算', '粗心', '抄写', '进退位', '符号', '笔误', '进位', '退位'];
 const KNOWLEDGE_GAP_KEYWORDS = ['概念', '公式', '不会', '定义', '原理', '不理解'];
 const MISREAD_KEYWORDS = ['审题', '漏看', '理解', '读题', '题意', '条件'];
@@ -120,7 +130,7 @@ export class ReportGenerator {
         ? computeAccuracy(ev.metrics.correctCount ?? 0, ev.metrics.totalCount)
         : undefined;
       completedTasks.push({
-        title: `${SUBJECT_LABELS[ev.subject]}·${ev.source}`,
+        title: `${SUBJECT_LABELS[ev.subject]}·${SOURCE_LABELS[ev.source] || ev.source}`,
         subject: ev.subject,
         accuracy,
         score: ev.metrics.score,

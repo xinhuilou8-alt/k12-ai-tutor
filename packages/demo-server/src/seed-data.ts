@@ -87,13 +87,10 @@ export function seedReportEvents(gen: ReportGenerator) {
   // Seed 7 days of learning events for realistic weekly report
   for (let d = 7; d >= 1; d--) {
     const date = daysAgo(d);
-    // Math grading
     gen.recordEvent({ childId: CHILD_ID, timestamp: new Date(date.getTime()), source: 'grading', subject: 'math',
       metrics: { duration: 1200, correctCount: 6 + Math.min(d, 4), totalCount: 10, errorTypes: d <= 3 ? ['计算错误', '退位错误'] : [], knowledgePoints: d <= 3 ? ['减法退位', '两位数加减法'] : ['加法'] } });
-    // Chinese dictation
     gen.recordEvent({ childId: CHILD_ID, timestamp: new Date(date.getTime() + 3600000), source: 'dictation', subject: 'chinese',
       metrics: { duration: 600, correctCount: 7 + Math.min(d, 3), totalCount: 10, errorTypes: d <= 2 ? ['形近字错误'] : [], knowledgePoints: ['生字词'], score: 70 + d * 3 } });
-    // English recitation
     if (d % 2 === 0) {
       gen.recordEvent({ childId: CHILD_ID, timestamp: new Date(date.getTime() + 7200000), source: 'recitation', subject: 'english',
         metrics: { duration: 300, score: 75 + d * 2 } });
@@ -104,7 +101,41 @@ export function seedReportEvents(gen: ReportGenerator) {
         metrics: { duration: 300, aiLectureWatched: true } });
     }
   }
-  console.log(`  📊 预置学情事件: 7天学习数据（数学+语文+英语）`);
+
+  // ── 今日学习事件（让日报告有数据） ──
+  const now = new Date();
+  const today9 = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 0, 0);
+  const today10 = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 10, 30, 0);
+  const today14 = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 14, 0, 0);
+  const today15 = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 15, 0, 0);
+  const today16 = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 16, 0, 0);
+  const today17 = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 17, 0, 0);
+
+  // 早上：英语跟读
+  gen.recordEvent({ childId: CHILD_ID, timestamp: today9, source: 'recitation', subject: 'english',
+    metrics: { duration: 480, score: 88, knowledgePoints: ['Unit5课文朗读'] } });
+
+  // 上午：语文听写
+  gen.recordEvent({ childId: CHILD_ID, timestamp: today10, source: 'dictation', subject: 'chinese',
+    metrics: { duration: 600, correctCount: 9, totalCount: 10, score: 90, errorTypes: ['形近字错误'], knowledgePoints: ['生字词·第5课'] } });
+
+  // 下午：数学练习册批改
+  gen.recordEvent({ childId: CHILD_ID, timestamp: today14, source: 'grading', subject: 'math',
+    metrics: { duration: 1500, correctCount: 16, totalCount: 20, errorTypes: ['退位错误', '退位错误', '计算错误', '运算顺序错误'], knowledgePoints: ['减法退位', '两位数加减法', '运算顺序'] } });
+
+  // 下午：数学AI讲题
+  gen.recordEvent({ childId: CHILD_ID, timestamp: today15, source: 'ai_lecture', subject: 'math',
+    metrics: { duration: 600, aiLectureWatched: true, knowledgePoints: ['减法退位'] } });
+
+  // 下午：数学应用题
+  gen.recordEvent({ childId: CHILD_ID, timestamp: today16, source: 'grading', subject: 'math',
+    metrics: { duration: 1200, correctCount: 2, totalCount: 3, errorTypes: ['审题不清'], knowledgePoints: ['应用题·行程问题'] } });
+
+  // 傍晚：英语单词听写
+  gen.recordEvent({ childId: CHILD_ID, timestamp: today17, source: 'dictation', subject: 'english',
+    metrics: { duration: 900, correctCount: 8, totalCount: 10, score: 80, errorTypes: ['拼写错误', '拼写错误'], knowledgePoints: ['Unit5单词'] } });
+
+  console.log(`  📊 预置学情事件: 7天历史 + 今日6条学习数据`);
 }
 
 export function seedAllData(homeworkMgr: HomeworkManager, oralSvc: OralRecordingService, reportGen?: ReportGenerator) {
