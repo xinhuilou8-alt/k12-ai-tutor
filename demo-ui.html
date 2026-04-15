@@ -238,7 +238,7 @@ return '<div class="cd" style="padding:20px">'
 +'<div class="cd" style="border-left:3px solid var(--p)"><div class="tt" style="color:var(--p)">💊 家长辅导建议</div>'
 +tips.map(function(t,i){return '<div style="padding:8px;font-size:13px;line-height:1.6;color:#374151;'+(i<tips.length-1?'border-bottom:1px solid var(--g1)':'')+'"><span style="color:var(--p);font-weight:600">'+(i+1)+'.</span> '+t+'</div>';}).join('')+'</div>'
 
-+'<div class="cd"><div style="padding:8px;background:#EFF6FF;border-radius:8px;font-size:12px;color:#1E40AF;margin-bottom:10px">💡 针对每道错题，可点击「AI讲题」查看讲解，或点击「举一反三」做3道同类练习巩固</div>'
++'<div class="cd"><div style="padding:8px;background:#EFF6FF;border-radius:8px;font-size:12px;color:#1E40AF;margin-bottom:10px">💡 针对每道错题，通过AI讲题解决，或举一反三练习</div>'
 +'<div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="var el=document.getElementById(\'errDetailList\');var show=el.style.display===\'none\';el.style.display=show?\'block\':\'none\';this.querySelector(\'.arrow\').textContent=show?\'▾\':\'▸\'">'
 +'<div class="tt" style="margin-bottom:0">❌ 错题明细（'+totalErr+'道）</div><span class="arrow" style="font-size:14px;color:var(--g5)">▾</span></div>'
 +'<div id="errDetailList" style="display:block;margin-top:8px">'
@@ -290,7 +290,7 @@ function openTransferPractice(origQ,kp,cause){
   document.body.appendChild(modal);
 }
 function rMiniDictation(){
-var d={title:'第5课生字词听写',totalWords:10,correctWords:8,
+var d={title:'第5课生字词听写',totalWords:10,correctWords:8,duration:480,
   errors:[
     {word:'勇敢',yours:'勇干',errorType:'形近字',tip:'"敢"右边是"攵"不是"干"，注意反文旁'},
     {word:'温暖',yours:'温暧',errorType:'形近字',tip:'"暖"右边是"爰"不是"暧"，日字旁+爰'}],
@@ -310,7 +310,10 @@ function ring(val,label,color){
 return '<div class="cd"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
 +'<div><div style="font-size:16px;font-weight:700">听写结果</div><div style="font-size:12px;color:var(--g5)">'+d.title+'</div></div>'
 +'<span style="padding:4px 12px;background:'+(passed?'#ECFDF5':'#FEF3C7')+';color:'+passColor+';border-radius:20px;font-size:13px;font-weight:700">'+(passed?'✅ 达标':'💪 未达标')+'</span></div>'
-+'<div style="display:flex;gap:8px;margin:16px 0">'+ring(d.accuracy,'正确率',passed?'#10B981':'#F59E0B')+ring(Math.round(d.correctWords/d.totalWords*100),'掌握度',d.correctWords>=d.totalWords*0.8?'#10B981':'#F59E0B')+ring(d.writeSpeed==='good'?90:d.writeSpeed==='normal'?70:50,'书写速度','#3B82F6')+'</div></div>'
++'<div style="display:flex;gap:12px;margin:16px 0">'
++'<div style="flex:1;text-align:center;padding:14px;background:var(--g50);border-radius:10px"><div style="font-size:32px;font-weight:800;color:'+passColor+'">'+d.accuracy+'%</div><div style="font-size:12px;color:var(--g5)">正确率（'+d.correctWords+'/'+d.totalWords+'）</div></div>'
++'<div style="flex:1;text-align:center;padding:14px;background:var(--g50);border-radius:10px"><div style="font-size:32px;font-weight:800;color:#3B82F6">'+Math.round(d.duration/60)+'</div><div style="font-size:12px;color:var(--g5)">听写时长（分钟）</div></div>'
++'</div></div>'
 
 +'<div class="cd"><div class="tt">📝 整体点评</div>'
 +'<div style="padding:8px;background:#ECFDF5;border-radius:8px;margin-bottom:6px;font-size:13px;color:#065F46"><span style="font-weight:600">👍 </span>10个词写对8个，基础词汇掌握不错，"春天""美丽""知识"等常用词全部正确</div>'
