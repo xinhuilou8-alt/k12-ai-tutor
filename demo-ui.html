@@ -210,27 +210,35 @@ var d={score:80,correct:16,total:20,
     {q:'小明走3km小红走2倍，小红走了多少？',yours:'5km',right:'6km',cause:'审题不清',kp:'应用题',analysis:'"走了2倍"是指小红走的距离是小明的2倍，即3×2=6km，不是3+2=5km'}],
   weakKPs:['减法退位','运算顺序','应用题'],causeDist:{粗心:2,知识缺漏:1,审题不清:1},
   good:'16道题答对，计算基础扎实，加法部分全对',
-  attention:'退位减法连错2道，运算顺序规则需巩固',
-  guidance:'建议：①做减法时先比较个位大小，小的要退位；②混合运算记住口诀"先乘除后加减"；③应用题先圈出关键数字再列式'};
+  attention:'退位减法连错2道，运算顺序规则需巩固'};
 var sc=d.score>=90?'#10B981':d.score>=70?'#F59E0B':'#EF4444';
 var totalErr=d.errors.length;
 var kpMap={};d.errors.forEach(function(e){kpMap[e.kp]=(kpMap[e.kp]||0)+1;});
 var kpEntries=Object.entries(kpMap).sort(function(a,b){return b[1]-a[1];});
+// 根据错因和薄弱知识点生成务实建议
+var tips=[];
+if(d.causeDist['粗心'])tips.push('本次有'+d.causeDist['粗心']+'道题因为粗心做错（主要在「减法退位」），建议孩子做完后用手遮住答案自己验算一遍，养成检查习惯');
+if(d.causeDist['知识缺漏'])tips.push('「运算顺序」属于知识没掌握，建议点击下方错题的「AI讲题」看一遍讲解视频，搞懂"先乘除后加减"的规则');
+if(d.causeDist['审题不清'])tips.push('应用题审题不够仔细，建议让孩子读题时用笔圈出关键数字和"几倍""一共"等关键词，再列式计算');
+tips.push('针对本次错题，建议点击每道错题下方的「举一反三」做3道同类练习，巩固薄弱点');
 
-return '<div class="cd" style="text-align:center;padding:20px">'
-+'<div style="font-size:48px;font-weight:800;color:'+sc+'">'+d.score+'<span style="font-size:20px">分</span></div>'
-+'<div style="margin:12px auto;max-width:280px;height:12px;background:var(--g1);border-radius:6px;overflow:hidden"><div style="height:100%;width:'+Math.round(d.correct/d.total*100)+'%;background:'+sc+';border-radius:6px"></div></div>'
-+'<div style="font-size:13px;color:var(--g5)">答对 <strong>'+d.correct+'</strong>/'+d.total+' 题</div></div>'
+return '<div class="cd" style="padding:20px">'
++'<div style="display:flex;align-items:center;gap:16px">'
++'<div style="text-align:center;flex:1"><div style="font-size:48px;font-weight:800;color:'+sc+'">'+d.score+'<span style="font-size:20px">分</span></div></div>'
++'<div style="width:1px;height:50px;background:var(--g2)"></div>'
++'<div style="display:flex;gap:16px;flex:1;justify-content:center">'
++'<div style="text-align:center"><div style="font-size:24px;font-weight:700;color:#10B981">'+d.correct+'</div><div style="font-size:11px;color:var(--g5)">答对</div></div>'
++'<div style="text-align:center"><div style="font-size:24px;font-weight:700;color:#EF4444">'+totalErr+'</div><div style="font-size:11px;color:var(--g5)">答错</div></div>'
++'<div style="text-align:center"><div style="font-size:24px;font-weight:700;color:var(--g6)">'+d.total+'</div><div style="font-size:11px;color:var(--g5)">总题数</div></div>'
++'</div></div>'
++'<div style="margin-top:12px;height:10px;background:var(--g1);border-radius:5px;overflow:hidden;display:flex"><div style="width:'+Math.round(d.correct/d.total*100)+'%;background:#10B981;border-radius:5px"></div><div style="width:'+Math.round(totalErr/d.total*100)+'%;background:#EF4444"></div></div></div>'
 
 +'<div class="cd"><div class="tt">📝 点评</div>'
 +'<div style="padding:8px;background:#ECFDF5;border-radius:8px;margin-bottom:6px;font-size:13px;color:#065F46"><span style="font-weight:600">👍 做得好：</span>'+d.good+'</div>'
 +'<div style="padding:8px;background:#FEF3C7;border-radius:8px;font-size:13px;color:#92400E"><span style="font-weight:600">⚠️ 需注意：</span>'+d.attention+'</div></div>'
 
-+'<div class="cd" style="background:#FEF2F2;border:1px solid #FECACA"><div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span style="font-size:16px">⚠️</span><span style="font-size:14px;font-weight:700;color:#991B1B">核心注意点</span></div>'
-+'<div style="font-size:13px;color:#991B1B;line-height:1.6">'+d.attention+'</div></div>'
-
-+'<div class="cd" style="border-left:3px solid var(--p)"><div class="tt" style="color:var(--p)">💊 指导建议</div>'
-+'<div style="font-size:13px;line-height:1.8;color:#374151">'+d.guidance+'</div></div>'
++'<div class="cd" style="border-left:3px solid var(--p)"><div class="tt" style="color:var(--p)">💊 给家长的建议</div>'
++tips.map(function(t,i){return '<div style="padding:8px;font-size:13px;line-height:1.6;color:#374151;'+(i<tips.length-1?'border-bottom:1px solid var(--g1)':'')+'"><span style="color:var(--p);font-weight:600">'+(i+1)+'.</span> '+t+'</div>';}).join('')+'</div>'
 
 +'<div class="cd"><div style="display:flex;gap:12px">'
 +'<div style="flex:1"><div class="tt" style="color:var(--d)">🔍 错因分布</div>'
