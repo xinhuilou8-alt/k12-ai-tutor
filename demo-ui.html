@@ -1034,7 +1034,7 @@ var _causeDB={
   '运算顺序错误':{originals:[{q:'3+4×2=?',wrong:'14',right:'11'}],variants:['(3+4)×2=?','20-4×3=?'],method:'口诀：先括号，再乘除，后加减',answers:{'(3+4)×2=?':'14','20-4×3=?':'8'}},
 };
 
-function openTwoPhaseModal(title,subtitle,originals,variants,tip,answers){
+function openTwoPhaseModal(title,subtitle,originals,variants,tip,answers,practiceKey){
   var modal=document.createElement('div');
   modal.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:999';
   var state={phase:'retry',idx:0,retryCorrect:0,retryTotal:originals.length,variantCorrect:0,variantIdx:0};
@@ -1056,8 +1056,9 @@ function openTwoPhaseModal(title,subtitle,originals,variants,tip,answers){
         state.phase='done';render();return;
       }
       var v=variants[state.variantIdx];
+      var phaseLabel=state.retryTotal>0?'<span style="font-size:11px;padding:2px 8px;background:#DBEAFE;color:#1E40AF;border-radius:10px">阶段二：举一反三</span>':'';
       modal.querySelector('.modal-body').innerHTML=
-      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px"><span style="font-size:11px;padding:2px 8px;background:#DBEAFE;color:#1E40AF;border-radius:10px">阶段二：举一反三</span><span style="font-size:11px;color:var(--g5)">连续答对 '+state.variantCorrect+'/3</span></div>'
+      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">'+phaseLabel+'<span style="font-size:11px;color:var(--g5)">连续答对 '+state.variantCorrect+'/3</span></div>'
       +'<div style="padding:12px;background:#EFF6FF;border-radius:8px;margin-bottom:10px;border-left:3px solid #3B82F6">'
       +'<div style="font-size:13px;font-weight:600">'+v+'</div></div>'
       +'<div style="padding:8px;background:#FEF3C7;border-radius:8px;font-size:12px;margin-bottom:10px">💡 '+tip+'</div>'
@@ -1067,13 +1068,15 @@ function openTwoPhaseModal(title,subtitle,originals,variants,tip,answers){
     } else {
       var mastered=state.variantCorrect>=3;
       var showRetry=state.retryTotal>0;
+      // Mark mastery on the weekly report page
+      if(mastered&&practiceKey){markMasteredOnPage(practiceKey);}
       modal.querySelector('.modal-body').innerHTML=
       '<div style="text-align:center;padding:20px">'
       +'<div style="font-size:32px;margin-bottom:8px">'+(mastered?'🎉':'💪')+'</div>'
       +'<div style="font-size:16px;font-weight:700;margin-bottom:12px">'+(mastered?'已掌握！':'继续加油')+'</div>'
       +'<div style="display:flex;justify-content:center;gap:16px;margin-bottom:16px">'
       +(showRetry?'<div style="text-align:center"><div style="font-size:20px;font-weight:700;color:'+(state.retryCorrect===state.retryTotal?'#10B981':'#EF4444')+'">'+state.retryCorrect+'/'+state.retryTotal+'</div><div style="font-size:11px;color:var(--g5)">错题重练</div></div>':'')
-      +'<div style="text-align:center"><div style="font-size:20px;font-weight:700;color:'+(state.variantCorrect>=3?'#10B981':'#F59E0B')+'">'+state.variantCorrect+'/3</div><div style="font-size:11px;color:var(--g5)">举一反三</div></div></div>'
+      +'<div style="text-align:center"><div style="font-size:20px;font-weight:700;color:'+(state.variantCorrect>=3?'#10B981':'#F59E0B')+'">'+state.variantCorrect+'/3</div><div style="font-size:11px;color:var(--g5)">'+(showRetry?'举一反三':'同知识点练习')+'</div></div></div>'
       +'<div style="font-size:12px;color:var(--g5);margin-bottom:12px">'+(mastered?'连续答对3道新题，该知识点已标记为掌握':'新题还需巩固，下次会继续推荐')+'</div>'
       +'<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="padding:10px 24px;background:var(--p);color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer">完成</button></div>';
     }
@@ -1105,21 +1108,50 @@ function openTwoPhaseModal(title,subtitle,originals,variants,tip,answers){
   render();
 }
 
+function markMasteredOnPage(key){
+  // Find all buttons that match this practice key and mark their parent as mastered
+  var btns=document.querySelectorAll('button');
+  for(var i=0;i<btns.length;i++){
+    var b=btns[i];
+    if(b.textContent.includes('练习')&&b.onclick&&b.onclick.toString().indexOf(key)!==-1){
+      // Already handled below
+    }
+  }
+  // Find the item in the weekly report by text content
+  var items=document.querySelectorAll('div[style*="border-bottom"]');
+  for(var j=0;j<items.length;j++){
+    var item=items[j];
+    if(item.textContent.indexOf(key)!==-1){
+      // Check if already marked
+      if(item.querySelector('.mastered-badge'))continue;
+      var badge=document.createElement('span');
+      badge.className='mastered-badge';
+      badge.style.cssText='display:inline-block;padding:2px 8px;background:#10B981;color:#fff;border-radius:10px;font-size:10px;font-weight:600;margin-left:6px';
+      badge.textContent='✅ 已掌握';
+      // Insert badge after the first line
+      var firstDiv=item.querySelector('div');
+      if(firstDiv)firstDiv.appendChild(badge);
+      // Disable the practice button in this item
+      var btn=item.querySelector('button');
+      if(btn){btn.disabled=true;btn.style.opacity='0.5';btn.textContent='✅ 已掌握';}
+      break;
+    }
+  }
+}
+
 function startKPPractice(kp,subject){
   var subLabel=subject==='chinese'?'语文':subject==='math'?'数学':'英语';
   var db=_practiceDB[kp]||{originals:[],variants:[kp+'变式1',kp+'变式2',kp+'变式3'],tip:'针对薄弱点反复练习',answers:{}};
-  // 同知识点练习：直接做新题，连续对3道=掌握（不重练原题）
   openTwoPhaseModal('🏋️ '+subLabel+'·'+kp+' 同知识点练习',
     '直接检验：连续答对3道同类新题即掌握',
-    [],db.variants,db.tip,db.answers||{});
+    [],db.variants,db.tip,db.answers||{},kp);
 }
 
 function startErrorCausePractice(causeType,count){
   var db=_causeDB[causeType]||{originals:[{q:causeType+'原题',wrong:'?',right:'正确答案'}],variants:[causeType+'变式1',causeType+'变式2',causeType+'变式3'],method:'仔细审题，做完检查',answers:{}};
-  // 纠正练习：先重做原题验证错误是否纠正，再做新题巩固
   openTwoPhaseModal('🔧 '+causeType+' 纠正练习',
     '先重做错题（验证是否纠正）→ 再举一反三巩固',
-    db.originals,db.variants,db.method,db.answers||{});
+    db.originals,db.variants,db.method,db.answers||{},causeType);
 }
 
 function generatePlanTask(idx,title,desc,appEntry,targetMetric){
