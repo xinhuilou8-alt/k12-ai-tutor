@@ -1008,7 +1008,7 @@ function openErrorList(){
     +'<div style="display:flex;flex-wrap:wrap;gap:4px">'+e.weakPoints.map(function(w){
       return '<span style="padding:2px 8px;background:#FEE2E2;color:#991B1B;border-radius:4px;font-size:11px">'+w+'</span>';
     }).join('')+'</div>':'')
-    +'<button onclick="startKPPractice(\''+e.weakPoints[0]+'\',\''+e.subjectKey+'\')" style="margin-top:8px;width:100%;padding:6px;font-size:12px;background:var(--d);color:#fff;border:none;border-radius:6px;cursor:pointer">🏋️ 开始'+e.subject+'纠错练习</button>'
+    +'<div style="margin-top:8px;padding:6px;text-align:center;font-size:11px;color:var(--g5);background:var(--g50);border-radius:6px">💡 可在上方「薄弱知识TOP3」点击练习按钮进行针对性训练</div>'
     +'</div>';
   }).join('')
   +'</div>';
@@ -1065,16 +1065,16 @@ function openTwoPhaseModal(title,subtitle,originals,variants,tip,answers){
       +'<button onclick="checkVariant()" style="padding:8px 16px;background:#3B82F6;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer">提交</button></div>'
       +'<div id="variantFeedback"></div>';
     } else {
-      var mastered=state.retryCorrect===state.retryTotal&&state.variantCorrect>=3;
-      var partial=state.retryCorrect===state.retryTotal&&state.variantCorrect<3;
+      var mastered=state.variantCorrect>=3;
+      var showRetry=state.retryTotal>0;
       modal.querySelector('.modal-body').innerHTML=
       '<div style="text-align:center;padding:20px">'
-      +'<div style="font-size:32px;margin-bottom:8px">'+(mastered?'🎉':'partial'?'💪':'📚')+'</div>'
-      +'<div style="font-size:16px;font-weight:700;margin-bottom:12px">'+(mastered?'已掌握！':partial?'部分掌握':'继续加油')+'</div>'
+      +'<div style="font-size:32px;margin-bottom:8px">'+(mastered?'🎉':'💪')+'</div>'
+      +'<div style="font-size:16px;font-weight:700;margin-bottom:12px">'+(mastered?'已掌握！':'继续加油')+'</div>'
       +'<div style="display:flex;justify-content:center;gap:16px;margin-bottom:16px">'
-      +'<div style="text-align:center"><div style="font-size:20px;font-weight:700;color:'+(state.retryCorrect===state.retryTotal?'#10B981':'#EF4444')+'">'+state.retryCorrect+'/'+state.retryTotal+'</div><div style="font-size:11px;color:var(--g5)">错题重练</div></div>'
+      +(showRetry?'<div style="text-align:center"><div style="font-size:20px;font-weight:700;color:'+(state.retryCorrect===state.retryTotal?'#10B981':'#EF4444')+'">'+state.retryCorrect+'/'+state.retryTotal+'</div><div style="font-size:11px;color:var(--g5)">错题重练</div></div>':'')
       +'<div style="text-align:center"><div style="font-size:20px;font-weight:700;color:'+(state.variantCorrect>=3?'#10B981':'#F59E0B')+'">'+state.variantCorrect+'/3</div><div style="font-size:11px;color:var(--g5)">举一反三</div></div></div>'
-      +'<div style="font-size:12px;color:var(--g5);margin-bottom:12px">'+(mastered?'连续答对3道新题，该知识点已标记为掌握':partial?'原题已掌握，新题还需巩固，下次会继续推荐':'原题还有错误，建议看AI讲解后再练')+'</div>'
+      +'<div style="font-size:12px;color:var(--g5);margin-bottom:12px">'+(mastered?'连续答对3道新题，该知识点已标记为掌握':'新题还需巩固，下次会继续推荐')+'</div>'
       +'<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="padding:10px 24px;background:var(--p);color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer">完成</button></div>';
     }
   }
@@ -1107,16 +1107,18 @@ function openTwoPhaseModal(title,subtitle,originals,variants,tip,answers){
 
 function startKPPractice(kp,subject){
   var subLabel=subject==='chinese'?'语文':subject==='math'?'数学':'英语';
-  var db=_practiceDB[kp]||{originals:[{q:kp+'原题',wrong:'?',right:'正确答案'}],variants:[kp+'变式1',kp+'变式2',kp+'变式3'],tip:'针对薄弱点反复练习',answers:{}};
-  openTwoPhaseModal('🏋️ '+subLabel+'·'+kp,
-    '先重做错题 → 再举一反三巩固',
-    db.originals,db.variants,db.tip,db.answers||{});
+  var db=_practiceDB[kp]||{originals:[],variants:[kp+'变式1',kp+'变式2',kp+'变式3'],tip:'针对薄弱点反复练习',answers:{}};
+  // 同知识点练习：直接做新题，连续对3道=掌握（不重练原题）
+  openTwoPhaseModal('🏋️ '+subLabel+'·'+kp+' 同知识点练习',
+    '直接检验：连续答对3道同类新题即掌握',
+    [],db.variants,db.tip,db.answers||{});
 }
 
 function startErrorCausePractice(causeType,count){
   var db=_causeDB[causeType]||{originals:[{q:causeType+'原题',wrong:'?',right:'正确答案'}],variants:[causeType+'变式1',causeType+'变式2',causeType+'变式3'],method:'仔细审题，做完检查',answers:{}};
-  openTwoPhaseModal('🔧 '+causeType+'纠正',
-    '错因：'+causeType+' · 先重做错题 → 再举一反三',
+  // 纠正练习：先重做原题验证错误是否纠正，再做新题巩固
+  openTwoPhaseModal('🔧 '+causeType+' 纠正练习',
+    '先重做错题（验证是否纠正）→ 再举一反三巩固',
     db.originals,db.variants,db.method,db.answers||{});
 }
 
