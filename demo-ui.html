@@ -398,8 +398,12 @@ return '<div class="cd"><div style="display:flex;justify-content:space-between;a
 +'<span style="padding:4px 12px;background:'+(passed?'#ECFDF5':'#FEF3C7')+';color:'+passColor+';border-radius:20px;font-size:13px;font-weight:700">'+(passed?'✅ 通关':'💪 未通关')+'</span></div>'
 +'<div style="display:flex;gap:8px;margin:16px 0">'+ring(d.fluency,'流畅度','#10B981')+ring(d.accuracy,'准确度',d.accuracy>=80?'#10B981':'#F59E0B')+ring(d.completeness,'完整度',d.completeness>=80?'#10B981':'#F59E0B')+'</div></div>'
 
-+'<div class="cd"><div class="tt">📝 逐段详情</div>'
-+d.paragraphs.map(function(p){
++'<div class="cd"><div class="tt">📝 整体点评</div>'
++'<div style="padding:8px;background:#ECFDF5;border-radius:8px;margin-bottom:6px;font-size:13px;color:#065F46"><span style="font-weight:600">👍 </span>整体背诵很流畅，第①④段完全正确，说明对课文的理解很到位</div>'
++'<div style="padding:8px;background:#FEF3C7;border-radius:8px;font-size:13px;color:#92400E"><span style="font-weight:600">⚠️ </span>第②段遗漏了"父亲指点花名"的细节，第③段把"村子"记成了"院子"，试试画面联想法记忆</div></div>'
+
++'<div class="cd"><div class="tt">📝 背诵错误</div>'
++d.paragraphs.filter(function(p){return p.status!=='correct';}).map(function(p){
   var icon=p.status==='correct'?'✅':p.status==='missed'?'⚠️':'❌';
   var label=p.status==='correct'?'完全正确':p.status==='missed'?'有遗漏':'有错误';
   var labelColor=p.status==='correct'?'#065F46':p.status==='missed'?'#92400E':'#991B1B';
@@ -413,10 +417,6 @@ return '<div class="cd"><div style="display:flex;justify-content:space-between;a
   +(p.status==='missed'?'<div class="detail" style="display:none;margin-top:8px;padding:8px;background:#FEF3C7;border-radius:6px;font-size:12px;color:#92400E">'+p.missed+'<br><span style="color:var(--g5);font-size:11px">原文：'+p.text+'</span></div>':'')
   +(p.status==='error'?'<div class="detail" style="display:none;margin-top:8px"><div style="padding:6px;background:#FEE2E2;border-radius:6px;font-size:12px;color:#991B1B;margin-bottom:4px">你背的：<s>'+p.yours+'</s></div><div style="padding:6px;background:#ECFDF5;border-radius:6px;font-size:12px;color:#065F46">原文：'+p.text+'</div><div style="font-size:11px;color:var(--g5);margin-top:4px">'+p.error+'</div></div>':'')
   +'</div>';}).join('')+'</div>'
-
-+'<div class="cd" style="background:linear-gradient(135deg,#F0FDF4,#ECFDF5);border:1px solid #BBF7D0">'
-+'<div style="font-size:13px;line-height:1.8;color:#065F46">🎓 '+d.comment+'</div>'
-+'<div style="margin-top:8px;padding:6px;background:#D1FAE5;border-radius:6px;font-size:12px;color:#065F46">🔬 科学复习：'+d.reviewSchedule+'</div></div>'
 
 +'<div class="cd"><div class="tt" style="color:var(--p)">💊 指导建议 · 三种巩固方式</div>'
 +'<div style="padding:10px;background:var(--g50);border-radius:8px;margin-bottom:6px">'
