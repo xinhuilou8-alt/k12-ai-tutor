@@ -1015,57 +1015,109 @@ function openErrorList(){
   document.body.appendChild(modal);
 }
 
-function startKPPractice(kp,subject){
-  const subLabel=subject==='chinese'?'语文':subject==='math'?'数学':'英语';
-  const practices={
-    '减法退位':{title:'退位减法专项',questions:['63-27=?','82-45=?','100-36=?','71-28=?','90-54=?'],tip:'退位时先借1当10，再减'},
-    '两位数加减法':{title:'两位数混合运算',questions:['34+28-15=?','56-19+23=?','72+18-34=?','45-27+38=?'],tip:'先算加减，注意进退位'},
-    '运算顺序':{title:'运算顺序练习',questions:['3+4×2=?','(3+4)×2=?','12÷3+5=?','20-4×3=?'],tip:'先乘除后加减，有括号先算括号'},
-    '生字词':{title:'易错字词听写',questions:['听写：勇敢','听写：温暖','听写：知识','听写：美丽','听写：春天'],tip:'注意偏旁部首和笔画顺序'},
-    'Unit5单词':{title:'Unit5单词拼写',questions:['拼写：beautiful','拼写：wonderful','拼写：different','拼写：important'],tip:'注意元音字母组合'},
-  };
-  const p=practices[kp]||{title:kp+'专项练习',questions:[kp+'练习题1',kp+'练习题2',kp+'练习题3'],tip:'针对薄弱点反复练习'};
-  const modal=document.createElement('div');
+// ===== 两阶段练习：错题重练 → 举一反三巩固 =====
+var _practiceDB={
+  '减法退位':{originals:[{q:'56-28=?',wrong:'38',right:'28'},{q:'100-37=?',wrong:'73',right:'63'}],variants:['63-27=?','82-45=?','71-28=?','90-54=?'],tip:'退位时先借1当10，再减',answers:{'63-27=?':'36','82-45=?':'37','71-28=?':'43','90-54=?':'36'}},
+  '两位数加减法':{originals:[{q:'34+28=?',wrong:'52',right:'62'}],variants:['56-19+23=?','72+18-34=?','45-27+38=?'],tip:'注意进退位',answers:{'56-19+23=?':'60','72+18-34=?':'56','45-27+38=?':'56'}},
+  '运算顺序':{originals:[{q:'3+4×2=?',wrong:'14',right:'11'}],variants:['12÷3+5=?','20-4×3=?','(3+4)×2=?'],tip:'先乘除后加减，有括号先算括号',answers:{'12÷3+5=?':'9','20-4×3=?':'8','(3+4)×2=?':'14'}},
+  '生字词':{originals:[{q:'听写：勇敢',wrong:'勇干',right:'勇敢'},{q:'听写：温暖',wrong:'温暧',right:'温暖'}],variants:['听写：知识','听写：美丽','听写：春天'],tip:'注意偏旁部首和笔画顺序',answers:{}},
+  'Unit5单词':{originals:[{q:'拼写：beautiful',wrong:'beatiful',right:'beautiful'}],variants:['拼写：wonderful','拼写：different','拼写：important'],tip:'注意元音字母组合',answers:{}},
+  '生字词·第5课':{originals:[{q:'听写：勇敢',wrong:'勇干',right:'勇敢'}],variants:['听写：温暖','听写：知识','听写：美丽'],tip:'注意偏旁部首',answers:{}},
+  '应用题·行程问题':{originals:[{q:'小明走3km，小红走2倍，小红走了多少？',wrong:'5km',right:'6km'}],variants:['甲乙相距120km，甲速40km/h，乙速20km/h，几小时相遇？'],tip:'圈出关键数字和关键词',answers:{'甲乙相距120km，甲速40km/h，乙速20km/h，几小时相遇？':'2小时'}},
+};
+var _causeDB={
+  '退位错误':{originals:[{q:'56-28=?',wrong:'38',right:'28'},{q:'100-37=?',wrong:'73',right:'63'}],variants:['63-27=?','82-45=?','100-36=?'],method:'先比较个位大小，小的要退位借10',answers:{'63-27=?':'36','82-45=?':'37','100-36=?':'64'}},
+  '计算错误':{originals:[{q:'47+38=?',wrong:'75',right:'85'}],variants:['156-89=?','23×4=?'],method:'做完后用逆运算验算',answers:{'156-89=?':'67','23×4=?':'92'}},
+  '审题不清':{originals:[{q:'小明走3km，小红走2倍，小红走了多少？',wrong:'5km',right:'6km'}],variants:['一根绳子剪3段需要剪几刀？','5个苹果每个3元，付20元找回多少？'],method:'读题时圈出关键数字和关键词',answers:{'一根绳子剪3段需要剪几刀？':'2刀','5个苹果每个3元，付20元找回多少？':'5元'}},
+  '形近字错误':{originals:[{q:'听写：勇敢',wrong:'勇干',right:'勇敢'}],variants:['辨析：己/已/巳','辨析：折/拆'],method:'找出不同笔画，编口诀记忆',answers:{}},
+  '拼写错误':{originals:[{q:'拼写：beautiful',wrong:'beatiful',right:'beautiful'}],variants:['拼写：Wednesday','拼写：different'],method:'按音节拆分记忆拼写',answers:{}},
+  '运算顺序错误':{originals:[{q:'3+4×2=?',wrong:'14',right:'11'}],variants:['(3+4)×2=?','20-4×3=?'],method:'口诀：先括号，再乘除，后加减',answers:{'(3+4)×2=?':'14','20-4×3=?':'8'}},
+};
+
+function openTwoPhaseModal(title,subtitle,originals,variants,tip,answers){
+  var modal=document.createElement('div');
   modal.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:999';
-  modal.innerHTML='<div style="background:#fff;border-radius:16px;padding:20px;max-width:400px;width:90%;max-height:80vh;overflow-y:auto">'
+  var state={phase:'retry',idx:0,retryCorrect:0,retryTotal:originals.length,variantCorrect:0,variantIdx:0};
+  function render(){
+    if(state.phase==='retry'){
+      if(state.idx>=originals.length){state.phase='variant';state.variantIdx=0;render();return;}
+      var o=originals[state.idx];
+      modal.querySelector('.modal-body').innerHTML=
+      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px"><span style="font-size:11px;padding:2px 8px;background:#FEE2E2;color:#DC2626;border-radius:10px">阶段一：错题重练</span><span style="font-size:11px;color:var(--g5)">'+(state.idx+1)+'/'+originals.length+'</span></div>'
+      +'<div style="padding:12px;background:#FEF2F2;border-radius:8px;margin-bottom:10px;border-left:3px solid #EF4444">'
+      +'<div style="font-size:13px;font-weight:600;margin-bottom:4px">'+o.q+'</div>'
+      +'<div style="font-size:11px;color:var(--d)">上次你的答案：<s>'+o.wrong+'</s></div></div>'
+      +'<div style="padding:8px;background:#FEF3C7;border-radius:8px;font-size:12px;margin-bottom:10px">💡 '+tip+'</div>'
+      +'<div style="display:flex;gap:8px"><input type="text" id="retryAns" placeholder="重新作答" style="flex:1;padding:8px;border:1px solid var(--g2);border-radius:8px;font-size:14px" onkeydown="if(event.key===\'Enter\')checkRetry()">'
+      +'<button onclick="checkRetry()" style="padding:8px 16px;background:var(--p);color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer">提交</button></div>'
+      +'<div id="retryFeedback"></div>';
+    } else if(state.phase==='variant'){
+      if(state.variantIdx>=variants.length||state.variantCorrect>=3){
+        state.phase='done';render();return;
+      }
+      var v=variants[state.variantIdx];
+      modal.querySelector('.modal-body').innerHTML=
+      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px"><span style="font-size:11px;padding:2px 8px;background:#DBEAFE;color:#1E40AF;border-radius:10px">阶段二：举一反三</span><span style="font-size:11px;color:var(--g5)">连续答对 '+state.variantCorrect+'/3</span></div>'
+      +'<div style="padding:12px;background:#EFF6FF;border-radius:8px;margin-bottom:10px;border-left:3px solid #3B82F6">'
+      +'<div style="font-size:13px;font-weight:600">'+v+'</div></div>'
+      +'<div style="padding:8px;background:#FEF3C7;border-radius:8px;font-size:12px;margin-bottom:10px">💡 '+tip+'</div>'
+      +'<div style="display:flex;gap:8px"><input type="text" id="variantAns" placeholder="作答" style="flex:1;padding:8px;border:1px solid var(--g2);border-radius:8px;font-size:14px" onkeydown="if(event.key===\'Enter\')checkVariant()">'
+      +'<button onclick="checkVariant()" style="padding:8px 16px;background:#3B82F6;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer">提交</button></div>'
+      +'<div id="variantFeedback"></div>';
+    } else {
+      var mastered=state.retryCorrect===state.retryTotal&&state.variantCorrect>=3;
+      var partial=state.retryCorrect===state.retryTotal&&state.variantCorrect<3;
+      modal.querySelector('.modal-body').innerHTML=
+      '<div style="text-align:center;padding:20px">'
+      +'<div style="font-size:32px;margin-bottom:8px">'+(mastered?'🎉':'partial'?'💪':'📚')+'</div>'
+      +'<div style="font-size:16px;font-weight:700;margin-bottom:12px">'+(mastered?'已掌握！':partial?'部分掌握':'继续加油')+'</div>'
+      +'<div style="display:flex;justify-content:center;gap:16px;margin-bottom:16px">'
+      +'<div style="text-align:center"><div style="font-size:20px;font-weight:700;color:'+(state.retryCorrect===state.retryTotal?'#10B981':'#EF4444')+'">'+state.retryCorrect+'/'+state.retryTotal+'</div><div style="font-size:11px;color:var(--g5)">错题重练</div></div>'
+      +'<div style="text-align:center"><div style="font-size:20px;font-weight:700;color:'+(state.variantCorrect>=3?'#10B981':'#F59E0B')+'">'+state.variantCorrect+'/3</div><div style="font-size:11px;color:var(--g5)">举一反三</div></div></div>'
+      +'<div style="font-size:12px;color:var(--g5);margin-bottom:12px">'+(mastered?'连续答对3道新题，该知识点已标记为掌握':partial?'原题已掌握，新题还需巩固，下次会继续推荐':'原题还有错误，建议看AI讲解后再练')+'</div>'
+      +'<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="padding:10px 24px;background:var(--p);color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer">完成</button></div>';
+    }
+  }
+  window.checkRetry=function(){
+    var ans=document.getElementById('retryAns');if(!ans||!ans.value.trim())return;
+    var o=originals[state.idx];
+    var correct=ans.value.trim()===o.right;
+    if(correct){state.retryCorrect++;document.getElementById('retryFeedback').innerHTML='<div style="margin-top:8px;padding:8px;background:#ECFDF5;border-radius:8px;font-size:13px;color:#065F46">✅ 正确！这次答对了</div>';
+    }else{document.getElementById('retryFeedback').innerHTML='<div style="margin-top:8px;padding:8px;background:#FEF2F2;border-radius:8px;font-size:13px;color:#991B1B">❌ 还是不对，正确答案是 <strong>'+o.right+'</strong></div>';}
+    setTimeout(function(){state.idx++;render();},1200);
+  };
+  window.checkVariant=function(){
+    var ans=document.getElementById('variantAns');if(!ans||!ans.value.trim())return;
+    var v=variants[state.variantIdx];
+    var expected=answers[v];
+    var correct=expected?ans.value.trim()===expected:true;
+    if(correct){state.variantCorrect++;document.getElementById('variantFeedback').innerHTML='<div style="margin-top:8px;padding:8px;background:#ECFDF5;border-radius:8px;font-size:13px;color:#065F46">✅ 正确！连续答对 '+state.variantCorrect+'/3</div>';
+    }else{state.variantCorrect=0;document.getElementById('variantFeedback').innerHTML='<div style="margin-top:8px;padding:8px;background:#FEF2F2;border-radius:8px;font-size:13px;color:#991B1B">❌ 不对，正确答案是 <strong>'+expected+'</strong>，连续计数重置</div>';}
+    setTimeout(function(){state.variantIdx++;render();},1200);
+  };
+  modal.innerHTML='<div style="background:#fff;border-radius:16px;padding:20px;max-width:420px;width:95%;max-height:85vh;overflow-y:auto">'
   +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">'
-  +'<div style="font-size:16px;font-weight:700">🏋️ '+p.title+'</div>'
+  +'<div style="font-size:16px;font-weight:700">'+title+'</div>'
   +'<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer">✕</button></div>'
-  +'<div style="font-size:12px;color:var(--g5);margin-bottom:12px">'+subLabel+' · 知识点：'+kp+'</div>'
-  +'<div style="padding:8px;background:#FEF3C7;border-radius:8px;font-size:12px;margin-bottom:12px">💡 '+p.tip+'</div>'
-  +p.questions.map(function(q,i){return '<div style="padding:10px;background:var(--g50);border-radius:8px;margin-bottom:6px;display:flex;align-items:center;gap:8px">'
-  +'<span style="font-size:14px;font-weight:700;color:var(--p)">'+(i+1)+'</span>'
-  +'<div style="flex:1;font-size:13px">'+q+'</div>'
-  +'<input type="text" placeholder="作答" style="width:80px;padding:4px 8px;border:1px solid var(--g2);border-radius:6px;font-size:12px"></div>';}).join('')
-  +'<button onclick="showStatus(\'练习已提交\');this.closest(\'div[style*=fixed]\').remove()" style="margin-top:12px;width:100%;padding:10px;background:var(--p);color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer">✅ 提交练习</button></div>';
+  +'<div style="font-size:12px;color:var(--g5);margin-bottom:12px">'+subtitle+'</div>'
+  +'<div class="modal-body"></div></div>';
   document.body.appendChild(modal);
+  render();
+}
+
+function startKPPractice(kp,subject){
+  var subLabel=subject==='chinese'?'语文':subject==='math'?'数学':'英语';
+  var db=_practiceDB[kp]||{originals:[{q:kp+'原题',wrong:'?',right:'正确答案'}],variants:[kp+'变式1',kp+'变式2',kp+'变式3'],tip:'针对薄弱点反复练习',answers:{}};
+  openTwoPhaseModal('🏋️ '+subLabel+'·'+kp,
+    '先重做错题 → 再举一反三巩固',
+    db.originals,db.variants,db.tip,db.answers||{});
 }
 
 function startErrorCausePractice(causeType,count){
-  var causeMap={
-    '退位错误':{title:'退位计算纠正',desc:'退位时容易忘记借位',exercises:['63-27=?（注意个位3<7需退位）','82-45=?（注意个位2<5需退位）','100-36=?（注意连续退位）'],method:'每次遇到减法，先比较个位大小，小的要退位借10'},
-    '计算错误':{title:'计算准确性训练',desc:'运算过程中出现笔误或进位遗漏',exercises:['47+38=?（注意进位）','156-89=?（注意退位）','23×4=?（注意进位）'],method:'做完后用逆运算验算'},
-    '审题不清':{title:'审题能力训练',desc:'没有准确理解题目条件',exercises:['小明走了3km，小红走了2倍，小红走了多少？','一根绳子剪3段需要剪几刀？','5个苹果每个3元，付20元找回多少？'],method:'读题时圈出关键数字和关键词'},
-    '形近字错误':{title:'形近字辨析',desc:'容易混淆字形相近的汉字',exercises:['辨析：己/已/巳','辨析：折/拆','辨析：辩/辨/辫'],method:'找出不同笔画，编口诀记忆'},
-    '拼写错误':{title:'易错单词拼写',desc:'字母顺序或元音拼写出错',exercises:['beautiful（注意eau）','Wednesday（注意dnes）','different（注意ff和ent）'],method:'按音节拆分记忆拼写'},
-    '运算顺序错误':{title:'运算顺序纠正',desc:'没有按先乘除后加减的顺序',exercises:['3+4×2=?','(3+4)×2=?','20-4×3=?'],method:'口诀：先括号，再乘除，后加减'},
-  };
-  var c=causeMap[causeType]||{title:causeType+'纠正练习',desc:'针对该错因专项训练',exercises:[causeType+'练习1',causeType+'练习2',causeType+'练习3'],method:'仔细审题，做完检查'};
-  var modal=document.createElement('div');
-  modal.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:999';
-  modal.innerHTML='<div style="background:#fff;border-radius:16px;padding:20px;max-width:400px;width:90%;max-height:80vh;overflow-y:auto">'
-  +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">'
-  +'<div style="font-size:16px;font-weight:700">🔧 '+c.title+'</div>'
-  +'<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer">✕</button></div>'
-  +'<div style="font-size:12px;color:var(--d);margin-bottom:8px">错因：'+causeType+'</div>'
-  +'<div style="font-size:12px;color:var(--g5);margin-bottom:12px">'+c.desc+'</div>'
-  +'<div style="padding:8px;background:#DBEAFE;border-radius:8px;font-size:12px;margin-bottom:12px;color:#1E40AF">🧠 纠正方法：'+c.method+'</div>'
-  +c.exercises.map(function(q,i){return '<div style="padding:10px;background:var(--g50);border-radius:8px;margin-bottom:6px;display:flex;align-items:center;gap:8px">'
-  +'<span style="font-size:14px;font-weight:700;color:var(--w)">'+(i+1)+'</span>'
-  +'<div style="flex:1;font-size:13px">'+q+'</div>'
-  +'<input type="text" placeholder="作答" style="width:80px;padding:4px 8px;border:1px solid var(--g2);border-radius:6px;font-size:12px"></div>';}).join('')
-  +'<button onclick="showStatus(\'纠正练习已提交\');this.closest(\'div[style*=fixed]\').remove()" style="margin-top:12px;width:100%;padding:10px;background:var(--w);color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer">✅ 提交练习</button></div>';
-  document.body.appendChild(modal);
+  var db=_causeDB[causeType]||{originals:[{q:causeType+'原题',wrong:'?',right:'正确答案'}],variants:[causeType+'变式1',causeType+'变式2',causeType+'变式3'],method:'仔细审题，做完检查',answers:{}};
+  openTwoPhaseModal('🔧 '+causeType+'纠正',
+    '错因：'+causeType+' · 先重做错题 → 再举一反三',
+    db.originals,db.variants,db.method,db.answers||{});
 }
 
 function generatePlanTask(idx,title,desc,appEntry,targetMetric){
