@@ -267,24 +267,134 @@ return '<div style="flex:1;text-align:center;padding:10px;background:var(--g50);
 +'<button onclick="showStatus(\'播放示范朗读\')" style="flex:1;padding:10px;background:#8B5CF6;color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer">🔊 听示范朗读</button></div>';
 }
 function rMiniRecite(){
-var d={score:88,passed:true,totalSentences:8,recitedSentences:7,
-  missedParts:['第6句："疑是地上霜"'],fluencyScore:85,
-  history:{lastScore:76,lastDate:'3天前',times:4},
-  comment:'快要全文通关了，再熟悉一下第6句"疑是地上霜"'};
-var sc=d.passed?'#10B981':'#F59E0B';
-return '<div class="cd" style="text-align:center;padding:20px">'
-+'<div style="font-size:36px;margin-bottom:4px">'+(d.passed?'🎉':'💪')+'</div>'
-+'<div style="font-size:16px;font-weight:700;color:'+sc+';margin-bottom:4px">'+(d.passed?'通关！':'未通关')+'</div>'
-+'<div style="font-size:48px;font-weight:800;color:'+sc+'">'+d.score+'<span style="font-size:20px">分</span></div>'
-+'<div style="font-size:13px;color:var(--g5)">背出 '+d.recitedSentences+'/'+d.totalSentences+' 句 · 流利度 '+d.fluencyScore+'分</div></div>'
-+'<div class="cd"><div class="tt">完整度</div>'
-+'<div style="display:flex;gap:4px;margin-bottom:8px">'+Array.from({length:d.totalSentences},function(_,i){var ok=i<d.recitedSentences;return '<div style="flex:1;height:8px;background:'+(ok?'#10B981':'#EF4444')+';border-radius:4px" title="第'+(i+1)+'句"></div>';}).join('')+'</div>'
-+'<div style="font-size:12px;color:var(--g5)">绿色=背对 红色=遗漏</div></div>'
-+(d.missedParts.length?'<div class="cd"><div class="tt" style="color:var(--d)">📝 遗漏内容</div>'+d.missedParts.map(function(m){return '<div style="padding:8px;background:#FEF2F2;border-radius:6px;font-size:13px;color:#991B1B;margin-bottom:4px">'+m+'</div>';}).join('')+'</div>':'')
-+(d.history?'<div class="cd"><div class="tt">📈 历史对比</div><div style="display:flex;align-items:center;gap:12px"><div style="font-size:13px">第'+d.history.times+'次背诵本篇</div><div style="flex:1;height:1px;background:var(--g2)"></div><div style="font-size:13px;color:#10B981;font-weight:600">比'+d.history.lastDate+'提升'+(d.score-d.history.lastScore)+'分 ↑</div></div></div>':'')
-+'<div class="cd" style="background:var(--sl);border:1px solid #BBF7D0"><div style="font-size:13px;color:#065F46">💡 '+d.comment+'</div></div>'
-+'<div style="display:flex;gap:8px;margin-top:8px"><button onclick="showStatus(\'开始重新背诵\')" style="flex:1;padding:10px;background:'+(d.passed?'#10B981':'var(--p)')+';color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer">🔄 再背一遍</button>'
-+'<button onclick="showStatus(\'显示原文提示\')" style="flex:1;padding:10px;background:#8B5CF6;color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer">📖 看原文提示</button></div>';
+var d={title:'第7课《桂花雨》',fluency:85,accuracy:75,completeness:80,
+  passed:false, // accuracy>=80 才通关
+  duration:720, // 约12分钟
+  paragraphs:[
+    {id:1,status:'correct',text:'桂花盛开的时候，不说香飘十里，至少前后十几家邻居，没有不浸在桂花香里的。'},
+    {id:2,status:'missed',text:'父亲指点花名，我的回答总是"桂花"。',missed:'遗漏了"父亲指点花名"的细节'},
+    {id:3,status:'error',text:'村子里的桂花树不算多。',error:'把"村子"记成了"院子"',yours:'院子里的桂花树不算多。'},
+    {id:4,status:'correct',text:'全年，整个村子都浸在桂花的香气里。'}],
+  weakParagraphs:[2,3],
+  comment:'整体背诵很流畅，第①④段完全正确，说明对课文的理解很到位！第②段遗漏了"父亲指点花名"的细节，第③段把"村子"记成了"院子"。试试画面联想法：想象桂花香飘满整个村庄的场景，比反复读更容易记住。',
+  nextReview:'明天（第1次复背）',
+  reviewSchedule:'按艾宾浩斯 1-3-7 天间隔安排复背，第7天全文检测巩固'};
+var passed=d.accuracy>=80;
+var passColor=passed?'#10B981':'#F59E0B';
+// 三维环形指标
+function ring(val,label,color){
+  var r=36,c=2*Math.PI*r,offset=c*(1-val/100);
+  return '<div style="text-align:center;flex:1">'
+  +'<svg width="88" height="88" viewBox="0 0 88 88"><circle cx="44" cy="44" r="'+r+'" fill="none" stroke="#E5E7EB" stroke-width="6"/>'
+  +'<circle cx="44" cy="44" r="'+r+'" fill="none" stroke="'+color+'" stroke-width="6" stroke-linecap="round" stroke-dasharray="'+c+'" stroke-dashoffset="'+offset+'" transform="rotate(-90 44 44)"/>'
+  +'<text x="44" y="48" text-anchor="middle" font-size="18" font-weight="700" fill="'+color+'">'+val+'%</text></svg>'
+  +'<div style="font-size:12px;color:var(--g5);margin-top:2px">'+label+'</div></div>';
+}
+return '<div class="cd"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
++'<div><div style="font-size:16px;font-weight:700">背诵结果</div><div style="font-size:12px;color:var(--g5)">'+d.title+'</div></div>'
++'<span style="padding:4px 12px;background:'+(passed?'#ECFDF5':'#FEF3C7')+';color:'+passColor+';border-radius:20px;font-size:13px;font-weight:700">'+(passed?'✅ 通关':'💪 未通关')+'</span></div>'
++'<div style="display:flex;gap:8px;margin:16px 0">'+ring(d.fluency,'流畅度','#10B981')+ring(d.accuracy,'准确度',d.accuracy>=80?'#10B981':'#F59E0B')+ring(d.completeness,'完整度',d.completeness>=80?'#10B981':'#F59E0B')+'</div></div>'
+
++'<div class="cd"><div class="tt">📝 逐段详情</div>'
++d.paragraphs.map(function(p){
+  var icon=p.status==='correct'?'✅':p.status==='missed'?'⚠️':'❌';
+  var label=p.status==='correct'?'完全正确':p.status==='missed'?'有遗漏':'有错误';
+  var labelColor=p.status==='correct'?'#065F46':p.status==='missed'?'#92400E':'#991B1B';
+  var bg=p.status==='correct'?'#fff':p.status==='missed'?'#FFFBEB':'#FEF2F2';
+  return '<div style="padding:10px;background:'+bg+';border-radius:8px;margin-bottom:6px;cursor:'+(p.status!=='correct'?'pointer':'default')+'"'
+  +(p.status!=='correct'?' onclick="this.querySelector(\'.detail\').style.display=this.querySelector(\'.detail\').style.display===\'none\'?\'block\':\'none\'"':'')+'>'
+  +'<div style="display:flex;align-items:center;gap:8px"><span style="font-size:14px">'+icon+'</span>'
+  +'<span style="font-size:13px;font-weight:600">第'+p.id+'段</span>'
+  +'<span style="font-size:12px;color:'+labelColor+'">'+label+'</span>'
+  +(p.status!=='correct'?'<span style="margin-left:auto;font-size:11px;color:var(--g5)">点击展开 ▸</span>':'')+'</div>'
+  +(p.status==='missed'?'<div class="detail" style="display:none;margin-top:8px;padding:8px;background:#FEF3C7;border-radius:6px;font-size:12px;color:#92400E">'+p.missed+'<br><span style="color:var(--g5);font-size:11px">原文：'+p.text+'</span></div>':'')
+  +(p.status==='error'?'<div class="detail" style="display:none;margin-top:8px"><div style="padding:6px;background:#FEE2E2;border-radius:6px;font-size:12px;color:#991B1B;margin-bottom:4px">你背的：<s>'+p.yours+'</s></div><div style="padding:6px;background:#ECFDF5;border-radius:6px;font-size:12px;color:#065F46">原文：'+p.text+'</div><div style="font-size:11px;color:var(--g5);margin-top:4px">'+p.error+'</div></div>':'')
+  +'</div>';}).join('')+'</div>'
+
++'<div class="cd" style="background:linear-gradient(135deg,#F0FDF4,#ECFDF5);border:1px solid #BBF7D0">'
++'<div style="font-size:13px;line-height:1.8;color:#065F46">🎓 '+d.comment+'</div>'
++'<div style="margin-top:8px;padding:6px;background:#D1FAE5;border-radius:6px;font-size:12px;color:#065F46">🔬 科学复习：'+d.reviewSchedule+'</div></div>'
+
++'<div class="cd"><div class="tt" style="color:var(--p)">💊 指导建议 · 三种巩固方式</div>'
++'<div style="padding:10px;background:var(--g50);border-radius:8px;margin-bottom:6px">'
++'<div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:13px;font-weight:600">🧩 挖空背诵</div><div style="font-size:11px;color:var(--g5)">将背错内容挖空，重新背诵填充</div></div>'
++'<button onclick="openFillBlank()" style="padding:4px 12px;background:var(--p);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer">开始</button></div></div>'
++'<div style="padding:10px;background:var(--g50);border-radius:8px;margin-bottom:6px">'
++'<div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:13px;font-weight:600">🔗 接龙背诵</div><div style="font-size:11px;color:var(--g5)">系统展示上一句，你来背下一句</div></div>'
++'<button onclick="openChainRecite()" style="padding:4px 12px;background:#3B82F6;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer">开始</button></div></div>'
++'<div style="padding:10px;background:var(--g50);border-radius:8px">'
++'<div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:13px;font-weight:600">📅 间隔复盘背诵</div><div style="font-size:11px;color:var(--g5)">按艾宾浩斯遗忘曲线安排复背任务</div></div>'
++'<button onclick="scheduleReview()" style="padding:4px 12px;background:#10B981;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer">安排</button></div></div></div>'
+
++'<div class="cd"><div style="display:flex;justify-content:space-between;font-size:12px;color:var(--g5)">'
++'<div>背诵课文：<strong style="color:var(--g6)">'+d.title+'</strong></div>'
++'<div>背诵时长：<strong style="color:var(--g6)">约'+Math.round(d.duration/60)+'分钟</strong></div></div>'
++'<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--g5);margin-top:4px">'
++'<div>薄弱段落：<strong style="color:var(--d)">第'+d.weakParagraphs.join('、')+'段需复习</strong></div>'
++'<div>下次复习：<strong style="color:var(--p)">'+d.nextReview+'</strong></div></div></div>';
+}
+
+function openFillBlank(){
+  var modal=document.createElement('div');
+  modal.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:999';
+  modal.innerHTML='<div style="background:#fff;border-radius:16px;padding:20px;max-width:420px;width:95%;max-height:85vh;overflow-y:auto">'
+  +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:16px;font-weight:700">🧩 挖空背诵</div>'
+  +'<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer">✕</button></div>'
+  +'<div style="font-size:12px;color:var(--g5);margin-bottom:12px">背错的部分已挖空，请填写正确内容</div>'
+  +'<div style="padding:12px;background:var(--g50);border-radius:8px;margin-bottom:8px;font-size:14px;line-height:2">'
+  +'第②段：<input type="text" placeholder="______" style="width:120px;padding:2px 6px;border:1px solid var(--g2);border-radius:4px;font-size:13px">指点花名，我的回答总是"桂花"。</div>'
+  +'<div style="padding:12px;background:var(--g50);border-radius:8px;margin-bottom:8px;font-size:14px;line-height:2">'
+  +'第③段：<input type="text" placeholder="______" style="width:80px;padding:2px 6px;border:1px solid var(--g2);border-radius:4px;font-size:13px">里的桂花树不算多。</div>'
+  +'<button onclick="showStatus(\'挖空背诵已提交\');this.closest(\'div[style*=fixed]\').remove()" style="margin-top:12px;width:100%;padding:10px;background:var(--p);color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer">✅ 提交</button></div>';
+  document.body.appendChild(modal);
+}
+
+function openChainRecite(){
+  var sentences=[
+    {id:1,text:'桂花盛开的时候，不说香飘十里，至少前后十几家邻居，没有不浸在桂花香里的。'},
+    {id:2,text:'父亲指点花名，我的回答总是"桂花"。',isWeak:true},
+    {id:3,text:'村子里的桂花树不算多。',isWeak:true},
+    {id:4,text:'全年，整个村子都浸在桂花的香气里。'}];
+  var modal=document.createElement('div');
+  modal.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:999';
+  var idx=0;
+  function renderChain(){
+    var s=sentences[idx];
+    var isLast=idx>=sentences.length-1;
+    modal.querySelector('.chain-body').innerHTML=
+    '<div style="font-size:12px;color:var(--g5);margin-bottom:8px">第'+(idx+1)+'/'+sentences.length+'段</div>'
+    +(idx>0?'<div style="padding:10px;background:#ECFDF5;border-radius:8px;margin-bottom:8px;font-size:13px;color:#065F46">上一段：'+sentences[idx-1].text+'</div>':'')
+    +(s.isWeak?'<div style="padding:12px;background:#FEF3C7;border-radius:8px;margin-bottom:8px;font-size:14px;color:#92400E;text-align:center">请背诵下一段 ⬇️</div>'
+    +'<div style="display:flex;gap:8px"><input type="text" id="chainAns" placeholder="背诵本段内容..." style="flex:1;padding:8px;border:1px solid var(--g2);border-radius:8px;font-size:13px">'
+    +'<button onclick="document.getElementById(\'chainReveal\').style.display=\'block\'" style="padding:8px 12px;background:var(--w);color:#fff;border:none;border-radius:8px;font-size:12px;cursor:pointer">看答案</button></div>'
+    +'<div id="chainReveal" style="display:none;margin-top:8px;padding:8px;background:#ECFDF5;border-radius:6px;font-size:12px;color:#065F46">原文：'+s.text+'</div>'
+    :'<div style="padding:10px;background:#ECFDF5;border-radius:8px;font-size:13px;color:#065F46">✅ '+s.text+'</div>')
+    +'<button onclick="'+(isLast?'showStatus(\'接龙背诵完成\');this.closest(\'div[style*=fixed]\').remove()':'advanceChain()')
+    +'" style="margin-top:12px;width:100%;padding:10px;background:var(--p);color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer">'+(isLast?'✅ 完成':'下一段 →')+'</button>';
+  }
+  window.advanceChain=function(){idx++;renderChain();};
+  modal.innerHTML='<div style="background:#fff;border-radius:16px;padding:20px;max-width:420px;width:95%;max-height:85vh;overflow-y:auto">'
+  +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:16px;font-weight:700">🔗 接龙背诵</div>'
+  +'<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer">✕</button></div>'
+  +'<div style="font-size:12px;color:var(--g5);margin-bottom:12px">系统展示上一段，你来背下一段</div>'
+  +'<div class="chain-body"></div></div>';
+  document.body.appendChild(modal);
+  renderChain();
+}
+
+function scheduleReview(){
+  var schedule=[{day:'明天',label:'第1次复背',desc:'重点背诵第②③段'},{day:'3天后',label:'第2次复背',desc:'全文背诵'},{day:'7天后',label:'全文检测',desc:'计时全文背诵，检验巩固效果'}];
+  var modal=document.createElement('div');
+  modal.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:999';
+  modal.innerHTML='<div style="background:#fff;border-radius:16px;padding:20px;max-width:400px;width:95%">'
+  +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:16px;font-weight:700">📅 间隔复盘背诵</div>'
+  +'<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer">✕</button></div>'
+  +'<div style="font-size:12px;color:var(--g5);margin-bottom:12px">按艾宾浩斯遗忘曲线安排 1-3-7 天复背计划</div>'
+  +schedule.map(function(s,i){return '<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--g50);border-radius:8px;margin-bottom:6px">'
+  +'<div style="width:36px;height:36px;background:var(--p);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">'+(i+1)+'</div>'
+  +'<div style="flex:1"><div style="font-size:13px;font-weight:600">'+s.day+' · '+s.label+'</div><div style="font-size:11px;color:var(--g5)">'+s.desc+'</div></div></div>';}).join('')
+  +'<button onclick="showStatus(\'复背计划已安排，将在明天提醒你\');this.closest(\'div[style*=fixed]\').remove()" style="margin-top:12px;width:100%;padding:10px;background:#10B981;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer">✅ 确认安排</button></div>';
+  document.body.appendChild(modal);
 }
 
 // ===== TAB 2: PREVIEW =====
