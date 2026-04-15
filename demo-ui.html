@@ -93,7 +93,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 <script>
 // ===== STATE =====
-const S={tab:'mvpreport',sub:{chinese:'dictation',math:'quiz',english:'dialogue',manage:'focus',efficient:'errors',parent:'report',mvpreport:'weekly',minireport:'grading'},
+const S={tab:'minireport',sub:{chinese:'dictation',math:'quiz',english:'dialogue',manage:'focus',efficient:'errors',parent:'report',mvpreport:'weekly',minireport:'grading'},
 grade:4,streak:7,mStep:0,mRes:[],dPhase:'ready',dStep:0,dRes:[],ePhase:'select',eTurn:0,eScn:null,
 rPhase:'list',rStep:0,fPhase:'ready',fRound:1,fFocus:true,fSec:600,fTid:null,
 omPhase:'ready',omStep:0,omRes:[],hToday:false,pcSit:null,wEval:null,fsSession:null,fsWords:[],feynmanSession:null,
@@ -421,7 +421,12 @@ return '<div class="cd"><div style="display:flex;justify-content:space-between;a
   +(p.status==='error'?'<div class="detail" style="display:none;margin-top:8px"><div style="padding:6px;background:#FEE2E2;border-radius:6px;font-size:12px;color:#991B1B;margin-bottom:4px">你背的：<s>'+p.yours+'</s></div><div style="padding:6px;background:#ECFDF5;border-radius:6px;font-size:12px;color:#065F46">原文：'+p.text+'</div><div style="font-size:11px;color:var(--g5);margin-top:4px">'+p.error+'</div></div>':'')
   +'</div>';}).join('')+'</div>'
 
-+'<div class="cd"><div class="tt" style="color:var(--p)">💊 指导建议 · 三种巩固方式</div>'
++'<div class="cd" style="border-left:3px solid var(--p)"><div class="tt" style="color:var(--p)">💊 家长辅导建议</div>'
++'<div style="padding:8px;font-size:13px;line-height:1.6;color:#374151;border-bottom:1px solid var(--g1)"><span style="color:var(--p);font-weight:600">1.</span> 第②③段是薄弱段落，建议今晚让孩子只重点背这两段，不用全文重背，降低抵触情绪</div>'
++'<div style="padding:8px;font-size:13px;line-height:1.6;color:#374151;border-bottom:1px solid var(--g1)"><span style="color:var(--p);font-weight:600">2.</span> "村子"记成"院子"属于理解偏差，建议和孩子聊聊课文场景——桂花香飘的是整个村庄，不只是院子</div>'
++'<div style="padding:8px;font-size:13px;line-height:1.6;color:#374151"><span style="color:var(--p);font-weight:600">3.</span> 可以用下方「挖空背诵」或「接龙背诵」帮孩子巩固薄弱段落</div></div>'
+
++'<div class="cd"><div class="tt" style="color:var(--p)">💊 巩固方式</div>'
 +'<div style="padding:10px;background:var(--g50);border-radius:8px;margin-bottom:6px">'
 +'<div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:13px;font-weight:600">🧩 挖空背诵</div><div style="font-size:11px;color:var(--g5)">将背错内容挖空，重新背诵填充</div></div>'
 +'<button onclick="openFillBlank()" style="padding:4px 12px;background:var(--p);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer">开始</button></div></div>'
