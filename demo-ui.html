@@ -216,7 +216,6 @@ var tips=[];
 if(d.causeDist['粗心'])tips.push('有'+d.causeDist['粗心']+'道题因为粗心做错（「减法退位」），建议孩子做完后用手遮住答案自己验算一遍');
 if(d.causeDist['知识缺漏'])tips.push('「运算顺序」属于知识没掌握，建议点击错题的「AI讲题」看一遍讲解，搞懂"先乘除后加减"');
 if(d.causeDist['审题不清'])tips.push('应用题审题不够仔细，建议让孩子读题时用笔圈出关键数字和"几倍"等关键词');
-tips.push('针对每道错题，点击「举一反三」做3道同类练习巩固');
 
 return '<div class="cd" style="padding:20px">'
 +'<div style="display:flex;align-items:center;gap:16px">'
@@ -239,7 +238,8 @@ return '<div class="cd" style="padding:20px">'
 +'<div class="cd" style="border-left:3px solid var(--p)"><div class="tt" style="color:var(--p)">💊 家长辅导建议</div>'
 +tips.map(function(t,i){return '<div style="padding:8px;font-size:13px;line-height:1.6;color:#374151;'+(i<tips.length-1?'border-bottom:1px solid var(--g1)':'')+'"><span style="color:var(--p);font-weight:600">'+(i+1)+'.</span> '+t+'</div>';}).join('')+'</div>'
 
-+'<div class="cd"><div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="var el=document.getElementById(\'errDetailList\');var show=el.style.display===\'none\';el.style.display=show?\'block\':\'none\';this.querySelector(\'.arrow\').textContent=show?\'▾\':\'▸\'">'
++'<div class="cd"><div style="padding:8px;background:#EFF6FF;border-radius:8px;font-size:12px;color:#1E40AF;margin-bottom:10px">💡 针对每道错题，可点击「AI讲题」查看讲解，或点击「举一反三」做3道同类练习巩固</div>'
++'<div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="var el=document.getElementById(\'errDetailList\');var show=el.style.display===\'none\';el.style.display=show?\'block\':\'none\';this.querySelector(\'.arrow\').textContent=show?\'▾\':\'▸\'">'
 +'<div class="tt" style="margin-bottom:0">❌ 错题明细（'+totalErr+'道）</div><span class="arrow" style="font-size:14px;color:var(--g5)">▾</span></div>'
 +'<div id="errDetailList" style="display:block;margin-top:8px">'
 +d.errors.map(function(e,i){return '<div style="padding:12px;background:'+(i%2===0?'var(--g50)':'#fff')+';border-radius:8px;margin-bottom:8px">'
