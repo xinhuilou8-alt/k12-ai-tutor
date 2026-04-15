@@ -291,17 +291,14 @@ function openTransferPractice(origQ,kp,cause){
 }
 function rMiniDictation(){
 var d={title:'第5课生字词听写',totalWords:10,correctWords:8,
-  words:[
-    {word:'春天',status:'correct'},{word:'美丽',status:'correct'},{word:'勇敢',status:'error',yours:'勇干',errorType:'形近字',tip:'"敢"右边是"攵"不是"干"，注意反文旁'},
-    {word:'知识',status:'correct'},{word:'温暖',status:'error',yours:'温暧',errorType:'形近字',tip:'"暖"右边是"爰"不是"暧"，日字旁+爰'},
-    {word:'坚强',status:'correct'},{word:'智慧',status:'correct'},{word:'努力',status:'correct'},{word:'团结',status:'correct'},{word:'诚实',status:'correct'}],
+  errors:[
+    {word:'勇敢',yours:'勇干',errorType:'形近字',tip:'"敢"右边是"攵"不是"干"，注意反文旁'},
+    {word:'温暖',yours:'温暧',errorType:'形近字',tip:'"暖"右边是"爰"不是"暧"，日字旁+爰'}],
   accuracy:80,writeSpeed:'good',
-  errorAnalysis:{形近字:2},
-  comment:'10个词写对8个，基础词汇掌握不错！"勇敢"和"温暖"都是形近字出错，右半部分容易混淆。建议用"拆字法"：把字拆成偏旁+部件，分别记忆。',
-  nextReview:'明天（第1次复听）',
-  reviewNote:'按艾宾浩斯 1-3-7 天间隔安排复听，只听写错词'};
+  nextReview:'明天（第1次复听）'};
 var passed=d.accuracy>=80;
 var passColor=passed?'#10B981':'#F59E0B';
+var errCount=d.errors.length;
 function ring(val,label,color){
   var r=36,c=2*Math.PI*r,offset=c*(1-val/100);
   return '<div style="text-align:center;flex:1">'
@@ -315,27 +312,28 @@ return '<div class="cd"><div style="display:flex;justify-content:space-between;a
 +'<span style="padding:4px 12px;background:'+(passed?'#ECFDF5':'#FEF3C7')+';color:'+passColor+';border-radius:20px;font-size:13px;font-weight:700">'+(passed?'✅ 达标':'💪 未达标')+'</span></div>'
 +'<div style="display:flex;gap:8px;margin:16px 0">'+ring(d.accuracy,'正确率',passed?'#10B981':'#F59E0B')+ring(Math.round(d.correctWords/d.totalWords*100),'掌握度',d.correctWords>=d.totalWords*0.8?'#10B981':'#F59E0B')+ring(d.writeSpeed==='good'?90:d.writeSpeed==='normal'?70:50,'书写速度','#3B82F6')+'</div></div>'
 
-+'<div class="cd"><div class="tt">📝 逐词详情</div>'
-+d.words.map(function(w){
-  if(w.status==='correct') return '<div style="display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid var(--g1)"><span style="font-size:14px">✅</span><span style="font-size:15px;font-weight:600">'+w.word+'</span><span style="font-size:12px;color:#065F46">正确</span></div>';
-  return '<div style="padding:10px;background:#FEF2F2;border-radius:8px;margin-bottom:6px;cursor:pointer" onclick="this.querySelector(\'.wd\').style.display=this.querySelector(\'.wd\').style.display===\'none\'?\'block\':\'none\'">'
-  +'<div style="display:flex;align-items:center;gap:8px"><span style="font-size:14px">❌</span><span style="font-size:15px;font-weight:600;color:#991B1B">'+w.word+'</span>'
-  +'<span class="b b-d" style="font-size:10px">'+w.errorType+'</span><span style="margin-left:auto;font-size:11px;color:var(--g5)">点击展开 ▸</span></div>'
-  +'<div class="wd" style="display:none;margin-top:8px">'
++'<div class="cd"><div class="tt">📝 整体点评</div>'
++'<div style="padding:8px;background:#ECFDF5;border-radius:8px;margin-bottom:6px;font-size:13px;color:#065F46"><span style="font-weight:600">👍 </span>10个词写对8个，基础词汇掌握不错，"春天""美丽""知识"等常用词全部正确</div>'
++'<div style="padding:8px;background:#FEF3C7;border-radius:8px;font-size:13px;color:#92400E"><span style="font-weight:600">⚠️ </span>"勇敢"和"温暖"都是形近字出错，右半部分容易混淆，建议用拆字法分别记忆偏旁</div></div>'
+
++'<div class="cd"><div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="var el=document.getElementById(\'dictErrList\');var show=el.style.display===\'none\';el.style.display=show?\'block\':\'none\';this.querySelector(\'.arrow\').textContent=show?\'▾\':\'▸\'">'
++'<div class="tt" style="margin-bottom:0;color:var(--d)">❌ 听写错误（'+errCount+'个词）</div><span class="arrow" style="font-size:14px;color:var(--g5)">▾</span></div>'
++'<div id="dictErrList" style="display:block;margin-top:8px">'
++d.errors.map(function(w,i){
+  return '<div style="padding:10px;background:#FEF2F2;border-radius:8px;margin-bottom:6px">'
+  +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="font-size:14px">❌</span><span style="font-size:15px;font-weight:600;color:#991B1B">'+w.word+'</span>'
+  +'<span class="b b-d" style="font-size:10px">'+w.errorType+'</span></div>'
   +'<div style="display:flex;gap:12px;font-size:13px;margin-bottom:4px"><span style="color:#EF4444">孩子写的：<s>'+w.yours+'</s></span><span style="color:#10B981">正确写法：<strong>'+w.word+'</strong></span></div>'
-  +'<div style="padding:6px;background:#FEF3C7;border-radius:6px;font-size:12px;color:#92400E">💡 '+w.tip+'</div></div></div>';
-}).join('')+'</div>'
+  +'<div style="padding:6px;background:#FEF3C7;border-radius:6px;font-size:12px;color:#92400E">💡 '+w.tip+'</div></div>';
+}).join('')+'</div></div>'
 
-+'<div class="cd" style="background:linear-gradient(135deg,#F0FDF4,#ECFDF5);border:1px solid #BBF7D0">'
-+'<div style="font-size:13px;line-height:1.8;color:#065F46">🎓 '+d.comment+'</div></div>'
-
-+'<div class="cd" style="border-left:3px solid var(--p)"><div class="tt" style="color:var(--p)">💊 给家长的建议</div>'
++'<div class="cd" style="border-left:3px solid var(--p)"><div class="tt" style="color:var(--p)">💊 家长辅导建议</div>'
 +'<div style="padding:8px;font-size:13px;line-height:1.6;color:#374151;border-bottom:1px solid var(--g1)"><span style="color:var(--p);font-weight:600">1.</span> 本次2个错词都是形近字问题（"敢"写成"干"、"暖"写成"暧"），建议用<strong>拆字法</strong>：把字拆成左右两部分，分别说出偏旁名称</div>'
 +'<div style="padding:8px;font-size:13px;line-height:1.6;color:#374151;border-bottom:1px solid var(--g1)"><span style="color:var(--p);font-weight:600">2.</span> 今晚睡前让孩子把错词<strong>各写3遍</strong>，边写边念偏旁（如"勇-敢，反文旁"），比单纯抄写记得更牢</div>'
 +'<div style="padding:8px;font-size:13px;line-height:1.6;color:#374151"><span style="color:var(--p);font-weight:600">3.</span> 点击下方「错词重听」只听写错的词，不用全部重来</div></div>'
 
 +'<div class="cd"><div class="tt" style="color:var(--p)">💊 巩固方式</div>'
-+'<div style="padding:10px;background:var(--g50);border-radius:8px;margin-bottom:6px"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:13px;font-weight:600">📝 错词重听</div><div style="font-size:11px;color:var(--g5)">只听写本次写错的'+( d.totalWords-d.correctWords)+'个词</div></div>'
++'<div style="padding:10px;background:var(--g50);border-radius:8px;margin-bottom:6px"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:13px;font-weight:600">📝 错词重听</div><div style="font-size:11px;color:var(--g5)">只听写本次写错的'+errCount+'个词</div></div>'
 +'<button onclick="showStatus(\'开始错词重听：勇敢、温暖\')" style="padding:4px 12px;background:var(--p);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer">开始</button></div></div>'
 +'<div style="padding:10px;background:var(--g50);border-radius:8px;margin-bottom:6px"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:13px;font-weight:600">🔍 形近字辨析</div><div style="font-size:11px;color:var(--g5)">对比易混淆的字，找出不同笔画</div></div>'
 +'<button onclick="showStatus(\'打开形近字辨析练习\')" style="padding:4px 12px;background:#3B82F6;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer">开始</button></div></div>'
@@ -346,7 +344,7 @@ return '<div class="cd"><div style="display:flex;justify-content:space-between;a
 +'<div>听写内容：<strong style="color:var(--g6)">'+d.title+'</strong></div>'
 +'<div>正确/总数：<strong style="color:var(--g6)">'+d.correctWords+'/'+d.totalWords+'</strong></div></div>'
 +'<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--g5);margin-top:4px">'
-+'<div>错误类型：<strong style="color:var(--d)">形近字'+d.errorAnalysis['形近字']+'个</strong></div>'
++'<div>错误类型：<strong style="color:var(--d)">形近字'+errCount+'个</strong></div>'
 +'<div>下次复听：<strong style="color:var(--p)">'+d.nextReview+'</strong></div></div></div>';
 }
 function rMiniReading(){
