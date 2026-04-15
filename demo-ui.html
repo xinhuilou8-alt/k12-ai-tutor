@@ -93,7 +93,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 <script>
 // ===== STATE =====
-const S={tab:'minireport',sub:{chinese:'dictation',math:'quiz',english:'dialogue',manage:'focus',efficient:'errors',parent:'report',mvpreport:'weekly',minireport:'grading'},
+const S={tab:'minireport',sub:{chinese:'dictation',math:'quiz',english:'dialogue',manage:'focus',efficient:'errors',parent:'report',mvpreport:'weekly',minireport:'recite'},
 grade:4,streak:7,mStep:0,mRes:[],dPhase:'ready',dStep:0,dRes:[],ePhase:'select',eTurn:0,eScn:null,
 rPhase:'list',rStep:0,fPhase:'ready',fRound:1,fFocus:true,fSec:600,fTid:null,
 omPhase:'ready',omStep:0,omRes:[],hToday:false,pcSit:null,wEval:null,fsSession:null,fsWords:[],feynmanSession:null,
@@ -228,14 +228,14 @@ return '<div class="cd" style="padding:20px">'
 +'</div></div>'
 +'<div style="margin-top:12px;height:10px;background:var(--g1);border-radius:5px;overflow:hidden;display:flex"><div style="width:'+Math.round(d.correct/d.total*100)+'%;background:#10B981;border-radius:5px"></div><div style="width:'+Math.round(totalErr/d.total*100)+'%;background:#EF4444"></div></div></div>'
 
-+'<div class="cd"><div class="tt">📝 点评</div>'
++'<div class="cd"><div class="tt">📝 整体点评</div>'
 +'<div style="padding:8px;background:#ECFDF5;border-radius:8px;margin-bottom:6px;font-size:13px;color:#065F46"><span style="font-weight:600">👍 做得好：</span>'+d.good+'</div>'
 +'<div style="padding:8px;background:#FEF3C7;border-radius:8px;font-size:13px;color:#92400E"><span style="font-weight:600">⚠️ 需注意：</span>'+d.attention+'</div></div>'
 
-+'<div class="cd"><div class="tt">🔍 错题归因分析</div>'
++'<div class="cd"><div class="tt">🔍 错题归因</div>'
 +'<div style="display:flex;gap:8px">'+Object.entries(d.causeDist).map(function(e){var color=e[0]==='粗心'?'#F59E0B':e[0]==='知识缺漏'?'#EF4444':'#8B5CF6';return '<div style="flex:1;text-align:center;padding:10px;background:var(--g50);border-radius:8px;border-top:3px solid '+color+'"><div style="font-size:20px;font-weight:700;color:'+color+'">'+e[1]+'</div><div style="font-size:12px;color:var(--g5)">'+e[0]+'</div></div>';}).join('')+'</div></div>'
 
-+'<div class="cd" style="border-left:3px solid var(--p)"><div class="tt" style="color:var(--p)">💊 家长辅导建议</div>'
++'<div class="cd" style="border-left:3px solid var(--p)"><div class="tt" style="color:var(--p)">💊 家长建议</div>'
 +tips.map(function(t,i){return '<div style="padding:8px;font-size:13px;line-height:1.6;color:#374151;'+(i<tips.length-1?'border-bottom:1px solid var(--g1)':'')+'"><span style="color:var(--p);font-weight:600">'+(i+1)+'.</span> '+t+'</div>';}).join('')+'</div>'
 
 +'<div class="cd"><div style="padding:8px;background:#EFF6FF;border-radius:8px;font-size:12px;color:#1E40AF;margin-bottom:10px">💡 针对每道错题，通过AI讲题解决，或举一反三练习</div>'
@@ -330,7 +330,7 @@ return '<div class="cd"><div style="display:flex;justify-content:space-between;a
   +'<div style="padding:6px;background:#FEF3C7;border-radius:6px;font-size:12px;color:#92400E">💡 '+w.tip+'</div></div>';
 }).join('')+'</div></div>'
 
-+'<div class="cd" style="border-left:3px solid var(--p)"><div class="tt" style="color:var(--p)">💊 家长辅导建议</div>'
++'<div class="cd" style="border-left:3px solid var(--p)"><div class="tt" style="color:var(--p)">💊 家长建议</div>'
 +'<div style="padding:8px;font-size:13px;line-height:1.6;color:#374151;border-bottom:1px solid var(--g1)"><span style="color:var(--p);font-weight:600">1.</span> 本次2个错词都是形近字问题（"敢"写成"干"、"暖"写成"暧"），建议用<strong>拆字法</strong>：把字拆成左右两部分，分别说出偏旁名称</div>'
 +'<div style="padding:8px;font-size:13px;line-height:1.6;color:#374151;border-bottom:1px solid var(--g1)"><span style="color:var(--p);font-weight:600">2.</span> 今晚睡前让孩子把错词<strong>各写3遍</strong>，边写边念偏旁（如"勇-敢，反文旁"），比单纯抄写记得更牢</div>'
 +'<div style="padding:8px;font-size:13px;line-height:1.6;color:#374151"><span style="color:var(--p);font-weight:600">3.</span> 点击下方「错词重听」只听写错的词，不用全部重来</div></div>'
@@ -421,7 +421,7 @@ return '<div class="cd"><div style="display:flex;justify-content:space-between;a
   +(p.status==='error'?'<div class="detail" style="display:none;margin-top:8px"><div style="padding:6px;background:#FEE2E2;border-radius:6px;font-size:12px;color:#991B1B;margin-bottom:4px">你背的：<s>'+p.yours+'</s></div><div style="padding:6px;background:#ECFDF5;border-radius:6px;font-size:12px;color:#065F46">原文：'+p.text+'</div><div style="font-size:11px;color:var(--g5);margin-top:4px">'+p.error+'</div></div>':'')
   +'</div>';}).join('')+'</div>'
 
-+'<div class="cd" style="border-left:3px solid var(--p)"><div class="tt" style="color:var(--p)">💊 家长辅导建议</div>'
++'<div class="cd" style="border-left:3px solid var(--p)"><div class="tt" style="color:var(--p)">💊 家长建议</div>'
 +'<div style="padding:8px;font-size:13px;line-height:1.6;color:#374151;border-bottom:1px solid var(--g1)"><span style="color:var(--p);font-weight:600">1.</span> 第②③段是薄弱段落，建议今晚让孩子只重点背这两段，不用全文重背，降低抵触情绪</div>'
 +'<div style="padding:8px;font-size:13px;line-height:1.6;color:#374151;border-bottom:1px solid var(--g1)"><span style="color:var(--p);font-weight:600">2.</span> "村子"记成"院子"属于理解偏差，建议和孩子聊聊课文场景——桂花香飘的是整个村庄，不只是院子</div>'
 +'<div style="padding:8px;font-size:13px;line-height:1.6;color:#374151"><span style="color:var(--p);font-weight:600">3.</span> 可以用下方「挖空背诵」或「接龙背诵」帮孩子巩固薄弱段落</div></div>'
