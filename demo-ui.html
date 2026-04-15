@@ -240,7 +240,7 @@ return '<div class="cd" style="padding:20px">'
 
 +'<div class="cd"><div style="padding:8px;background:#EFF6FF;border-radius:8px;font-size:12px;color:#1E40AF;margin-bottom:10px">💡 针对每道错题，通过AI讲题解决，或举一反三练习</div>'
 +'<div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="var el=document.getElementById(\'errDetailList\');var show=el.style.display===\'none\';el.style.display=show?\'block\':\'none\';this.querySelector(\'.arrow\').textContent=show?\'▾\':\'▸\'">'
-+'<div class="tt" style="margin-bottom:0">❌ 错题明细（'+totalErr+'道）</div><span class="arrow" style="font-size:14px;color:var(--g5)">▾</span></div>'
++'<div class="tt" style="margin-bottom:0;color:var(--d)">📋 错题明细（'+totalErr+'道）</div><span class="arrow" style="font-size:14px;color:var(--g5)">▾</span></div>'
 +'<div id="errDetailList" style="display:block;margin-top:8px">'
 +d.errors.map(function(e,i){return '<div style="padding:12px;background:'+(i%2===0?'var(--g50)':'#fff')+';border-radius:8px;margin-bottom:8px">'
 +'<div style="font-size:14px;font-weight:600;margin-bottom:6px">'+e.q+'</div>'
@@ -320,11 +320,11 @@ return '<div class="cd"><div style="display:flex;justify-content:space-between;a
 +'<div style="padding:8px;background:#FEF3C7;border-radius:8px;font-size:13px;color:#92400E"><span style="font-weight:600">⚠️ </span>"勇敢"和"温暖"都是形近字出错，右半部分容易混淆，建议用拆字法分别记忆偏旁</div></div>'
 
 +'<div class="cd"><div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="var el=document.getElementById(\'dictErrList\');var show=el.style.display===\'none\';el.style.display=show?\'block\':\'none\';this.querySelector(\'.arrow\').textContent=show?\'▾\':\'▸\'">'
-+'<div class="tt" style="margin-bottom:0;color:var(--d)">❌ 听写错误（'+errCount+'个词）</div><span class="arrow" style="font-size:14px;color:var(--g5)">▾</span></div>'
++'<div class="tt" style="margin-bottom:0;color:var(--w)">✏️ 需要巩固的词（'+errCount+'个）</div><span class="arrow" style="font-size:14px;color:var(--g5)">▾</span></div>'
 +'<div id="dictErrList" style="display:block;margin-top:8px">'
 +d.errors.map(function(w,i){
   return '<div style="padding:10px;background:#FEF2F2;border-radius:8px;margin-bottom:6px">'
-  +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="font-size:14px">❌</span><span style="font-size:15px;font-weight:600;color:#991B1B">'+w.word+'</span>'
+  +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="font-size:14px">✏️</span><span style="font-size:15px;font-weight:600;color:#92400E">'+w.word+'</span>'
   +'<span class="b b-d" style="font-size:10px">'+w.errorType+'</span></div>'
   +'<div style="display:flex;gap:12px;font-size:13px;margin-bottom:4px"><span style="color:#EF4444">孩子写的：<s>'+w.yours+'</s></span><span style="color:#10B981">正确写法：<strong>'+w.word+'</strong></span></div>'
   +'<div style="padding:6px;background:#FEF3C7;border-radius:6px;font-size:12px;color:#92400E">💡 '+w.tip+'</div></div>';
