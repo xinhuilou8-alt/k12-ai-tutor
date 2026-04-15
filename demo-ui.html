@@ -78,7 +78,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
   <div class="tabs" id="tabs">
     <div class="tab active" data-t="home">🏠首页</div>
-    <div class="tab" data-t="mvpreport">📊报告</div>
+    <div class="tab" data-t="mvpreport">📊学情大报告</div>
+    <div class="tab" data-t="minireport">📋单次小报告</div>
     <div class="tab" data-t="preview">📚预习</div>
     <div class="tab" data-t="chinese">📖语文</div>
     <div class="tab" data-t="math">🔢数学</div>
@@ -92,7 +93,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 <script>
 // ===== STATE =====
-const S={tab:'mvpreport',sub:{chinese:'dictation',math:'quiz',english:'dialogue',manage:'focus',efficient:'errors',parent:'report',mvpreport:'weekly'},
+const S={tab:'mvpreport',sub:{chinese:'dictation',math:'quiz',english:'dialogue',manage:'focus',efficient:'errors',parent:'report',mvpreport:'weekly',minireport:'grading'},
 grade:4,streak:7,mStep:0,mRes:[],dPhase:'ready',dStep:0,dRes:[],ePhase:'select',eTurn:0,eScn:null,
 rPhase:'list',rStep:0,fPhase:'ready',fRound:1,fFocus:true,fSec:600,fTid:null,
 omPhase:'ready',omStep:0,omRes:[],hToday:false,pcSit:null,wEval:null,fsSession:null,fsWords:[],feynmanSession:null,
@@ -189,6 +190,78 @@ return `<div class="cd"><div class="tt">⚠️ 异常行为检测</div>
 <div style="font-size:13px;color:var(--g5);margin-bottom:8px">自动检测秒搜抄答案、深夜学习、错题未订正等异常行为</div>
 <div class="bg"><button class="btn bp" onclick="loadMvpAnomalies()">🔍 开始检测</button></div></div>
 <div id="mvpAnomalyResult"></div>`;
+}
+
+// ===== 单次小报告 =====
+function rMiniReport(){
+const subs=[{id:'grading',em:'✏️',nm:'批改报告',ds:'题目批改'},{id:'reading',em:'🎤',nm:'跟读报告',ds:'朗读评测'},{id:'recite',em:'📖',nm:'背诵报告',ds:'背诵评测'}];
+let h=subNav('minireport',subs);
+if(S.sub.minireport==='grading') h+=rMiniGrading();
+else if(S.sub.minireport==='reading') h+=rMiniReading();
+else h+=rMiniRecite();
+return h;
+}
+function rMiniGrading(){
+var d={score:80,correct:16,total:20,duration:1500,avgSec:75,
+  errors:[{q:'56-28=?',yours:'38',right:'28',cause:'粗心',kp:'减法退位'},{q:'100-37=?',yours:'73',right:'63',cause:'粗心',kp:'减法退位'},{q:'3+4×2=?',yours:'14',right:'11',cause:'知识缺漏',kp:'运算顺序'},{q:'小明走3km小红走2倍，小红走了多少？',yours:'5km',right:'6km',cause:'审题不清',kp:'应用题'}],
+  weakKPs:['减法退位','运算顺序','应用题'],causeDist:{粗心:2,知识缺漏:1,审题不清:1},comment:'计算速度不错，注意退位时多检查一步'};
+var sc=d.score>=90?'#10B981':d.score>=70?'#F59E0B':'#EF4444';
+return '<div class="cd" style="text-align:center;padding:20px">'
++'<div style="font-size:48px;font-weight:800;color:'+sc+'">'+d.score+'<span style="font-size:20px">分</span></div>'
++'<div style="margin:12px auto;max-width:280px;height:12px;background:var(--g1);border-radius:6px;overflow:hidden"><div style="height:100%;width:'+Math.round(d.correct/d.total*100)+'%;background:'+sc+';border-radius:6px"></div></div>'
++'<div style="font-size:13px;color:var(--g5)">答对 <strong>'+d.correct+'</strong>/'+d.total+' 题 · 用时 '+Math.round(d.duration/60)+'分钟 · 平均'+d.avgSec+'秒/题</div></div>'
++'<div class="cd"><div class="tt">❌ 错题摘要（'+d.errors.length+'道）</div>'
++d.errors.map(function(e,i){return '<div style="padding:10px;background:'+(i%2===0?'var(--g50)':'#fff')+';border-radius:8px;margin-bottom:6px">'
++'<div style="font-size:13px;font-weight:600;margin-bottom:4px">'+e.q+'</div>'
++'<div style="display:flex;gap:12px;font-size:12px"><span style="color:#EF4444">你的答案：<s>'+e.yours+'</s></span><span style="color:#10B981">正确答案：'+e.right+'</span></div>'
++'<div style="display:flex;gap:6px;margin-top:4px"><span class="b '+(e.cause==='粗心'?'b-w':e.cause==='知识缺漏'?'b-d':'b-p')+'" style="font-size:10px">'+e.cause+'</span><span class="b b-d" style="font-size:10px">'+e.kp+'</span></div></div>';}).join('')+'</div>'
++'<div class="cd"><div class="tt">🔍 错因分布</div><div style="display:flex;gap:8px">'+Object.entries(d.causeDist).map(function(e){var pct=Math.round(e[1]/d.errors.length*100);return '<div style="flex:1;text-align:center;padding:8px;background:var(--g50);border-radius:8px"><div style="font-size:18px;font-weight:700;color:var(--d)">'+e[1]+'</div><div style="font-size:11px;color:var(--g5)">'+e[0]+' ('+pct+'%)</div></div>';}).join('')+'</div></div>'
++'<div class="cd"><div class="tt">📌 薄弱知识点</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+d.weakKPs.map(function(k){return '<span class="b b-d">'+k+'</span>';}).join('')+'</div></div>'
++'<div class="cd" style="background:var(--sl);border:1px solid #BBF7D0"><div style="font-size:13px;color:#065F46">💡 '+d.comment+'</div></div>'
++'<div style="display:flex;gap:8px;margin-top:8px"><button onclick="showStatus(\'跳转到AI讲解\')" style="flex:1;padding:10px;background:var(--p);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer">📺 查看AI讲解</button>'
++'<button onclick="startKPPractice(\'减法退位\',\'math\')" style="flex:1;padding:10px;background:#3B82F6;color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer">🏋️ 同知识点练习</button></div>';
+}
+function rMiniReading(){
+var d={score:85,fluency:82,accuracy:88,intonation:84,duration:108,
+  problemWords:['清鲜','明朗'],stutterCount:2,
+  history:{lastScore:77,lastDate:'上周三',times:3},
+  comment:'流利度进步明显，注意"清鲜"的发音，嘴型要张开一些'};
+var sc=d.score>=90?'#10B981':d.score>=70?'#F59E0B':'#EF4444';
+return '<div class="cd" style="text-align:center;padding:20px">'
++'<div style="font-size:48px;font-weight:800;color:'+sc+'">'+d.score+'<span style="font-size:20px">分</span></div>'
++'<div style="font-size:13px;color:var(--g5)">朗读时长 '+Math.floor(d.duration/60)+'分'+d.duration%60+'秒 · 卡顿'+d.stutterCount+'次</div></div>'
++'<div class="cd"><div class="tt">📊 三维评分</div><div style="display:flex;gap:8px">'
++[{n:'流利度',v:d.fluency,c:'#3B82F6'},{n:'准确度',v:d.accuracy,c:'#10B981'},{n:'语调',v:d.intonation,c:'#8B5CF6'}].map(function(m){
+return '<div style="flex:1;text-align:center;padding:10px;background:var(--g50);border-radius:8px">'
++'<div style="font-size:22px;font-weight:700;color:'+m.c+'">'+m.v+'</div>'
++'<div style="margin:4px auto;width:80%;height:6px;background:var(--g1);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+m.v+'%;background:'+m.c+';border-radius:3px"></div></div>'
++'<div style="font-size:11px;color:var(--g5)">'+m.n+'</div></div>';}).join('')+'</div></div>'
++'<div class="cd"><div class="tt">🔴 问题词标注</div>'
++(d.problemWords.length?'<div style="display:flex;flex-wrap:wrap;gap:6px">'+d.problemWords.map(function(w){return '<span style="padding:4px 12px;background:#FEE2E2;color:#DC2626;border-radius:6px;font-size:13px;font-weight:600">'+w+'</span>';}).join('')+'</div>':'<div style="font-size:13px;color:var(--g5)">全部读对，没有问题词 🎉</div>')+'</div>'
++(d.history?'<div class="cd"><div class="tt">📈 历史对比</div><div style="display:flex;align-items:center;gap:12px"><div style="font-size:13px">第'+d.history.times+'次朗读本篇</div><div style="flex:1;height:1px;background:var(--g2)"></div><div style="font-size:13px;color:#10B981;font-weight:600">比'+d.history.lastDate+'提升'+(d.score-d.history.lastScore)+'分 ↑</div></div></div>':'')
++'<div class="cd" style="background:var(--sl);border:1px solid #BBF7D0"><div style="font-size:13px;color:#065F46">💡 '+d.comment+'</div></div>'
++'<div style="display:flex;gap:8px;margin-top:8px"><button onclick="showStatus(\'开始重新朗读\')" style="flex:1;padding:10px;background:var(--p);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer">🔄 再读一遍</button>'
++'<button onclick="showStatus(\'播放示范朗读\')" style="flex:1;padding:10px;background:#8B5CF6;color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer">🔊 听示范朗读</button></div>';
+}
+function rMiniRecite(){
+var d={score:88,passed:true,totalSentences:8,recitedSentences:7,
+  missedParts:['第6句："疑是地上霜"'],fluencyScore:85,
+  history:{lastScore:76,lastDate:'3天前',times:4},
+  comment:'快要全文通关了，再熟悉一下第6句"疑是地上霜"'};
+var sc=d.passed?'#10B981':'#F59E0B';
+return '<div class="cd" style="text-align:center;padding:20px">'
++'<div style="font-size:36px;margin-bottom:4px">'+(d.passed?'🎉':'💪')+'</div>'
++'<div style="font-size:16px;font-weight:700;color:'+sc+';margin-bottom:4px">'+(d.passed?'通关！':'未通关')+'</div>'
++'<div style="font-size:48px;font-weight:800;color:'+sc+'">'+d.score+'<span style="font-size:20px">分</span></div>'
++'<div style="font-size:13px;color:var(--g5)">背出 '+d.recitedSentences+'/'+d.totalSentences+' 句 · 流利度 '+d.fluencyScore+'分</div></div>'
++'<div class="cd"><div class="tt">完整度</div>'
++'<div style="display:flex;gap:4px;margin-bottom:8px">'+Array.from({length:d.totalSentences},function(_,i){var ok=i<d.recitedSentences;return '<div style="flex:1;height:8px;background:'+(ok?'#10B981':'#EF4444')+';border-radius:4px" title="第'+(i+1)+'句"></div>';}).join('')+'</div>'
++'<div style="font-size:12px;color:var(--g5)">绿色=背对 红色=遗漏</div></div>'
++(d.missedParts.length?'<div class="cd"><div class="tt" style="color:var(--d)">📝 遗漏内容</div>'+d.missedParts.map(function(m){return '<div style="padding:8px;background:#FEF2F2;border-radius:6px;font-size:13px;color:#991B1B;margin-bottom:4px">'+m+'</div>';}).join('')+'</div>':'')
++(d.history?'<div class="cd"><div class="tt">📈 历史对比</div><div style="display:flex;align-items:center;gap:12px"><div style="font-size:13px">第'+d.history.times+'次背诵本篇</div><div style="flex:1;height:1px;background:var(--g2)"></div><div style="font-size:13px;color:#10B981;font-weight:600">比'+d.history.lastDate+'提升'+(d.score-d.history.lastScore)+'分 ↑</div></div></div>':'')
++'<div class="cd" style="background:var(--sl);border:1px solid #BBF7D0"><div style="font-size:13px;color:#065F46">💡 '+d.comment+'</div></div>'
++'<div style="display:flex;gap:8px;margin-top:8px"><button onclick="showStatus(\'开始重新背诵\')" style="flex:1;padding:10px;background:'+(d.passed?'#10B981':'var(--p)')+';color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer">🔄 再背一遍</button>'
++'<button onclick="showStatus(\'显示原文提示\')" style="flex:1;padding:10px;background:#8B5CF6;color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer">📖 看原文提示</button></div>';
 }
 
 // ===== TAB 2: PREVIEW =====
@@ -1395,7 +1468,7 @@ showStatus('多解方案已生成');
 }catch(e){document.getElementById('multiSolResult').innerHTML='<div class="nt nd">后端未连接</div>';}}
 
 // ===== RENDER ENGINE =====
-const RR={home:rHome,mvpreport:rMvpReport,preview:rPreview,chinese:rChinese,math:rMath,english:rEnglish,efficient:rEfficient,manage:rManage,profile:rProfile,parent:rParent};
+const RR={home:rHome,mvpreport:rMvpReport,minireport:rMiniReport,preview:rPreview,chinese:rChinese,math:rMath,english:rEnglish,efficient:rEfficient,manage:rManage,profile:rProfile,parent:rParent};
 function R(){document.getElementById('ct').innerHTML=RR[S.tab]();document.getElementById('ct').scrollTop=0;
 // Auto-load report data
 if(S.tab==='mvpreport'){
