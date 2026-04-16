@@ -569,6 +569,7 @@ app.post('/api/grading/vision', async (req, res) => {
   try {
     const { imageBase64, grade, subject } = req.body;
     if (!imageBase64) return res.status(400).json({ error: 'imageBase64 is required' });
+    console.log(`  📷 Vision grading request: grade=${grade}, subject=${subject}, imageSize=${Math.round(imageBase64.length/1024)}KB`);
 
     const prompt = `# 角色
 你是K12教育产品的AI批改+报告引擎。请识别图片中学生的作业内容，判断每道题的对错，并生成完整的批改报告。
@@ -617,6 +618,7 @@ app.post('/api/grading/vision', async (req, res) => {
       res.json({ error: 'Failed to parse report', raw: result.content });
     }
   } catch (e: any) {
+    console.error('  ❌ Vision grading error:', e.message);
     res.status(500).json({ error: e.message });
   }
 });
