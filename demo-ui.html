@@ -519,12 +519,13 @@ var wordSets=[
   {id:'lesson5',title:'第5课生字词',words:['春天','美丽','勇敢','知识','温暖','坚强','智慧','努力','团结','诚实']},
   {id:'lesson7',title:'第7课桂花雨',words:['桂花','盛开','香飘','邻居','指点','回答','村子','全年','香气','美丽']},
 ];
+window._wordSets=wordSets;
 return '<div class="cd" style="text-align:center;padding:24px">'
 +'<div style="font-size:48px;margin-bottom:12px">📝</div>'
 +'<div style="font-size:16px;font-weight:700;margin-bottom:8px">听写助手</div>'
 +'<div style="font-size:13px;color:var(--g5);margin-bottom:16px">系统播报词语，孩子手写后拍照上传，AI自动批改</div></div>'
 +'<div class="cd"><div class="tt">📋 选择听写内容</div>'
-+wordSets.map(function(ws){return '<div style="padding:12px;background:var(--g50);border-radius:8px;margin-bottom:8px;cursor:pointer" onclick="startDictationFlow(\''+ws.id+'\',\''+ws.title+'\','+JSON.stringify(ws.words).replace(/'/g,"\\'")+')"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:14px;font-weight:600">'+ws.title+'</div><div style="font-size:12px;color:var(--g5)">'+ws.words.length+'个词语</div></div><span style="color:var(--p);font-size:14px">开始 →</span></div></div>';}).join('')
++wordSets.map(function(ws,i){return '<div style="padding:12px;background:var(--g50);border-radius:8px;margin-bottom:8px;cursor:pointer" onclick="var w=window._wordSets['+i+'];startDictationFlow(w.id,w.title,w.words)"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:14px;font-weight:600">'+ws.title+'</div><div style="font-size:12px;color:var(--g5)">'+ws.words.length+'个词语</div></div><span style="color:var(--p);font-size:14px">开始 →</span></div></div>';}).join('')
 +'<div style="padding:12px;background:var(--g50);border-radius:8px;cursor:pointer" onclick="startDictationDemo()"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:14px;font-weight:600">🎯 体验Demo数据</div><div style="font-size:12px;color:var(--g5)">直接查看听写报告效果</div></div><span style="color:#3B82F6;font-size:14px">体验 →</span></div></div></div>'
 +'<div class="cd"><div class="tt">📋 听写流程</div><div style="display:flex;gap:8px">'
 +'<div style="flex:1;padding:10px;background:var(--g50);border-radius:8px;text-align:center"><div style="font-size:20px">①</div><div style="font-size:12px;font-weight:600">系统播报</div><div style="font-size:11px;color:var(--g5)">TTS逐词播报</div></div>'
@@ -616,12 +617,13 @@ var texts=[
   {id:'guihua',title:'第7课《桂花雨》',paragraphs:['桂花盛开的时候，不说香飘十里，至少前后十几家邻居，没有不浸在桂花香里的。','父亲指点花名，我的回答总是"桂花"。','村子里的桂花树不算多。','全年，整个村子都浸在桂花的香气里。']},
   {id:'spring',title:'春天的公园',paragraphs:['春风轻轻吹过，公园里的一切都醒了过来。','柳树抽出嫩绿的枝条，像姑娘们垂下的长发。桃花、杏花你挨着我、我挨着你，粉粉白白地开满枝头，引来几只小蜜蜂嗡嗡地采蜜。','小河解冻了，河水叮咚叮咚地唱着歌，小鱼在水里快活地游来游去。小朋友们脱下厚厚的棉袄，在草地上放风筝、追蝴蝶，笑声飘得很远很远。','春天的公园，真是又美丽又热闹。']},
 ];
+window._reciteTexts=texts;
 return '<div class="cd" style="text-align:center;padding:24px">'
 +'<div style="font-size:48px;margin-bottom:12px">🎤</div>'
 +'<div style="font-size:16px;font-weight:700;margin-bottom:8px">背诵助手</div>'
 +'<div style="font-size:13px;color:var(--g5);margin-bottom:16px">选择课文，开始背诵录音，AI自动评测生成报告</div></div>'
 +'<div class="cd"><div class="tt">📖 选择背诵课文</div>'
-+texts.map(function(t){return '<div style="padding:12px;background:var(--g50);border-radius:8px;margin-bottom:8px;cursor:pointer" onclick="startReciteFlow(\''+t.id+'\',\''+t.title.replace(/'/g,"\\'")+'\','+JSON.stringify(t.paragraphs).replace(/'/g,"\\'")+')"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:14px;font-weight:600">'+t.title+'</div><div style="font-size:12px;color:var(--g5)">'+t.paragraphs.length+'段</div></div><span style="color:var(--p);font-size:14px">开始 →</span></div></div>';}).join('')
++texts.map(function(t,i){return '<div style="padding:12px;background:var(--g50);border-radius:8px;margin-bottom:8px;cursor:pointer" onclick="var t=window._reciteTexts['+i+'];startReciteFlow(t.id,t.title,t.paragraphs)"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:14px;font-weight:600">'+t.title+'</div><div style="font-size:12px;color:var(--g5)">'+t.paragraphs.length+'段</div></div><span style="color:var(--p);font-size:14px">开始 →</span></div></div>';}).join('')
 +'<div style="padding:12px;background:var(--g50);border-radius:8px;cursor:pointer" onclick="startReciteDemo()"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:14px;font-weight:600">🎯 体验Demo数据</div><div style="font-size:12px;color:var(--g5)">直接查看背诵报告效果</div></div><span style="color:#3B82F6;font-size:14px">体验 →</span></div></div></div>'
 +'<div class="cd"><div class="tt">📋 背诵流程</div><div style="display:flex;gap:8px">'
 +'<div style="flex:1;padding:10px;background:var(--g50);border-radius:8px;text-align:center"><div style="font-size:20px">①</div><div style="font-size:12px;font-weight:600">查看原文</div><div style="font-size:11px;color:var(--g5)">熟悉课文</div></div>'
