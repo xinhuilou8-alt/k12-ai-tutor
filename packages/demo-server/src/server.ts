@@ -42,6 +42,7 @@ import { createGradeAdaptationEngine } from '../../grade-adaptation/src';
 
 // ── New features ──
 import { buildBackgroundPromptSection } from '../../llm-service/src/prompt-background-builder';
+import { buildGradingPrompt, buildDictationPrompt, buildRecitePrompt } from './prompts';
 import { FiveStepVocabModule } from '../../chinese-engine/src/five-step-vocab';
 import { MultiSolutionService } from '../../math-engine/src/multi-solution';
 import { PreviewService } from '../../preview-service/src/preview-service';
@@ -602,36 +603,7 @@ app.post('/api/grading/vision', async (req, res) => {
     if (!imageBase64) return res.status(400).json({ error: 'imageBase64 is required' });
     console.log(`  📷 Vision grading request: grade=${grade}, subject=${subject}, imageSize=${Math.round(imageBase64.length/1024)}KB`);
 
-    const prompt = `# 角色
-你是K12教育产品的AI批改+报告引擎。请识别图片中学生的作业内容，判断每道题的对错，并生成完整的批改报告。
-
-# 输入信息
-- 孩子年级：${grade || 4}年级
-- 学科：${subject || 'math'}
-- 图片内容：学生手写的作业答题结果
-
-# 任务
-1. 识别图片中的每道题目和学生的答案
-2. 判断每道题是否正确
-3. 对错题进行错因分类和解析
-4. 生成完整报告
-
-# 输出要求
-请严格按以下 JSON 格式输出，不要输出任何其他内容：
-{
-  "score": 数字(正确数/总数×100取整),
-  "review": {"good": "做得好15-30字含具体答对数量", "attention": "需注意15-30字含具体知识点"},
-  "errorCauseAnalysis": {"粗心": 数字, "知识缺漏": 数字, "审题不清": 数字},
-  "parentAdvice": ["建议1含具体知识点和方法", "建议2", "建议3"],
-  "errorDetails": [{"question":"题目","childAnswer":"孩子答案","correctAnswer":"正确答案","cause":"粗心/知识缺漏/审题不清","knowledgePoint":"知识点","analysis":"解析30-60字"}],
-  "transferQuestions": [{"originalQuestion":"原题","sameKP":{"question":"同知识点题","answer":"答案"},"sameCause":{"question":"同错因题","answer":"答案"},"harder":{"question":"升难度题","answer":"答案"}}]
-}
-
-# 规则
-- 错因分类：退位/计算/笔误→粗心，概念/公式/不会→知识缺漏，审题/漏看→审题不清
-- parentAdvice面向家长，务实落地，最多3条
-- analysis先写正确步骤再指出错在哪
-- transferQuestions每道错题3道新题不重复`;
+    const prompt = buildGradingPrompt({ grade: grade || 4, subject: subject || 'math' });
 
     const messages = [
       { role: 'user' as const, content: [
@@ -673,33 +645,7 @@ app.post('/api/dictation/vision', async (req, res) => {
     if (!imageBase64 || !originalWords) return res.status(400).json({ error: 'imageBase64 and originalWords required' });
     console.log(`  📝 Dictation vision: title=${title}, words=${originalWords.length}`);
 
-    const prompt = `# 角色
-你是K12教育产品的AI听写批改+报告引擎。请识别图片中学生手写的听写内容，与标准词语逐一比对，判断每个词是否正确，并生成完整的听写报告。
-
-# 输入数据
-- 孩子年级：${grade || 4}年级
-- 听写任务：${title || '生字词听写'}
-- 标准词语列表：${JSON.stringify(originalWords)}
-- 图片内容：学生手写的听写结果
-
-# 批改规则
-1. 识别图片中学生手写的每个词语
-2. 将识别结果与标准词语逐一比对
-3. 完全一致→正确；不一致→判断是写错还是识别误差
-4. 错字分类：形近字（字形相似）/同音字（读音相同）/笔画错误/多字少字
-
-# 输出要求
-请严格按以下JSON格式输出，不要输出任何其他内容：
-{
-  "accuracy": 数字(正确数/总数×100取整),
-  "correctCount": 数字,
-  "totalCount": 数字,
-  "passed": true/false(accuracy>=80为true),
-  "review": {"good": "鼓励15-30字含具体正确数量", "attention": "提醒15-30字含错误规律和方法"},
-  "errors": [{"word":"标准词","yours":"孩子写的","errorType":"形近字/同音字/笔画错误/多字少字","tip":"记忆提示15-25字含偏旁名称"}],
-  "parentAdvice": ["建议1含具体方法", "建议2今晚能做的", "建议3引导错词重听"],
-  "nextReviewDays": [1,3,7]
-}`;
+    const prompt = buildDictationPrompt({ grade: grade || 4, title: title || '生字词听写', originalWords });
 
     const messages = [{ role: 'user' as const, content: [
       { type: 'text' as const, text: prompt },
@@ -739,37 +685,7 @@ app.post('/api/recite/evaluate', async (req, res) => {
     if (!originalParagraphs || !asrText) return res.status(400).json({ error: 'originalParagraphs and asrText required' });
     console.log(`  🎤 Recite evaluate: title=${title}, paragraphs=${originalParagraphs.length}`);
 
-    const prompt = `# 角色
-你是K12教育产品的AI背诵批改+报告引擎。请将孩子背诵的语音识别文本与课文原文逐段比对，判断每段背诵情况，并生成完整的背诵报告。
-
-# 输入数据
-- 孩子年级：${grade || 4}年级
-- 背诵课文：${title || '课文背诵'}
-- 流畅度评分：${fluencyScore || 80}
-- 课文原文（按段落拆分）：${JSON.stringify(originalParagraphs)}
-- ASR语音识别结果：${asrText}
-
-# 批改规则
-1. 将ASR文本与原文逐段对齐（按语义和关键词匹配）
-2. 每段判定：correct（完整准确）/missed（有遗漏）/error（有错误）
-3. ASR容错：标点差异不算错，语气词增减不算错，同音字语义不变不算错，关键名词动词替换算错
-4. accuracy=正确段数/总段数×100取整，passed=accuracy>=80
-
-# 输出要求
-请严格按以下JSON格式输出：
-{
-  "fluency": ${fluencyScore || 80},
-  "accuracy": 数字,
-  "completeness": 数字,
-  "passed": true/false,
-  "review": {"good": "鼓励15-35字含正确段落编号", "attention": "提醒15-35字含错误段落和记忆方法"},
-  "errorParagraphs": [{"id":数字,"status":"missed/error","label":"有遗漏/有错误","originalText":"原文","childText":"孩子背的(missed为空)","detail":"具体问题"}],
-  "fillBlankTexts": [{"paragraphId":数字,"text":"挖空文本用____替换错误部分"}],
-  "chainReciteData": [{"id":数字,"text":"原文","isWeak":true/false}],
-  "parentAdvice": ["建议1针对薄弱段落", "建议2解释记错原因", "建议3引导巩固工具"],
-  "nextReviewDays": [1,3,7],
-  "summary": {"title":"课文名","weakParagraphs":[数字],"nextReview":"明天（第1次复背）"}
-}`;
+    const prompt = buildRecitePrompt({ grade: grade || 4, title: title || '课文背诵', fluencyScore: fluencyScore || 80, originalParagraphs, asrText });
 
     const messages = [{ role: 'user' as const, content: prompt }];
     const result = await llmProvider.chat(messages);
