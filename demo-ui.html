@@ -275,7 +275,7 @@ return (d.photoUrl?'<div class="cd"><div class="tt">📷 作业照片</div><img 
 +'<button onclick="showStatus(\'AI正在讲解: '+e.q.replace(/'/g,'')+'\')" style="flex:1;padding:6px;font-size:11px;background:var(--p);color:#fff;border:none;border-radius:6px;cursor:pointer">📺 AI讲题</button>'
 +'<button onclick="openTransferPractice(\''+e.q.replace(/'/g,'')+'\',\''+e.kp.replace(/'/g,'')+'\',\''+e.cause.replace(/'/g,'')+'\')" style="flex:1;padding:6px;font-size:11px;background:#3B82F6;color:#fff;border:none;border-radius:6px;cursor:pointer">🔄 举一反三</button>'
 +'</div></div>';}).join('')+'</div></div>'
-+'<div style="text-align:center;margin-top:12px"><button onclick="S.gradingReport=null;R()" style="padding:8px 20px;background:var(--g4);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer">🔄 重新批改</button></div>';
++'<div style="text-align:center;margin-top:12px"><button onclick="S.gradingReport=null;R()" style="padding:8px 20px;background:var(--g4);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer">🔄 返回</button></div>';
 }
 function handleGradingPhoto(input){
   if(!input.files||!input.files[0])return;
@@ -671,7 +671,7 @@ return '<div class="cd"><div style="display:flex;justify-content:space-between;a
 +'<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--g5);margin-top:4px">'
 +'<div>错误类型：<strong style="color:var(--d)">形近字'+errCount+'个</strong></div>'
 +'<div>下次复听：<strong style="color:var(--p)">'+d.nextReview+'</strong></div></div></div>'
-+'<div style="text-align:center;margin-top:12px"><button onclick="S.dictationReport=null;R()" style="padding:8px 20px;background:var(--g4);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer">🔄 重新听写</button></div>';
++'<div style="text-align:center;margin-top:12px"><button onclick="S.dictationReport=null;R()" style="padding:8px 20px;background:var(--g4);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer">🔄 返回</button></div>';
 }
 function rMiniReading(){
 var d={score:85,fluency:82,accuracy:88,intonation:84,duration:108,
@@ -787,7 +787,7 @@ return '<div class="cd"><div style="display:flex;justify-content:space-between;a
 +'<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--g5);margin-top:4px">'
 +'<div>薄弱段落：<strong style="color:var(--d)">第'+d.weakParagraphs.join('、')+'段需复习</strong></div>'
 +'<div>下次复习：<strong style="color:var(--p)">'+d.nextReview+'</strong></div></div></div>'
-+'<div style="text-align:center;margin-top:12px"><button onclick="S.reciteReport=null;R()" style="padding:8px 20px;background:var(--g4);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer">🔄 重新背诵</button></div>';
++'<div style="text-align:center;margin-top:12px"><button onclick="S.reciteReport=null;R()" style="padding:8px 20px;background:var(--g4);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer">🔄 返回</button></div>';
 }
 
 function openFillBlank(){
