@@ -632,16 +632,6 @@ return '<div class="cd" style="text-align:center;padding:24px">'
 }
 var d=S.reciteReport;
 var passed=d.accuracy>=80;
-  duration:720, // 约12分钟
-  paragraphs:[
-    {id:1,status:'correct',text:'桂花盛开的时候，不说香飘十里，至少前后十几家邻居，没有不浸在桂花香里的。'},
-    {id:2,status:'missed',text:'父亲指点花名，我的回答总是"桂花"。',missed:'遗漏了"父亲指点花名"的细节'},
-    {id:3,status:'error',text:'村子里的桂花树不算多。',error:'把"村子"记成了"院子"',yours:'院子里的桂花树不算多。'},
-    {id:4,status:'correct',text:'全年，整个村子都浸在桂花的香气里。'}],
-  weakParagraphs:[2,3],
-  comment:'整体背诵很流畅，第①④段完全正确，说明对课文的理解很到位！第②段遗漏了"父亲指点花名"的细节，第③段把"村子"记成了"院子"。试试画面联想法：想象桂花香飘满整个村庄的场景，比反复读更容易记住。',
-  nextReview:'明天（第1次复背）',
-  reviewSchedule:'按艾宾浩斯 1-3-7 天间隔安排复背，第7天全文检测巩固'};
 var passColor=passed?'#10B981':'#F59E0B';
 // 三维环形指标
 function ring(val,label,color){
