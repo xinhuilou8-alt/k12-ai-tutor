@@ -97,7 +97,7 @@ const S={tab:'minireport',sub:{chinese:'dictation',math:'quiz',english:'dialogue
 grade:4,streak:7,mStep:0,mRes:[],dPhase:'ready',dStep:0,dRes:[],ePhase:'select',eTurn:0,eScn:null,
 rPhase:'list',rStep:0,fPhase:'ready',fRound:1,fFocus:true,fSec:600,fTid:null,
 omPhase:'ready',omStep:0,omRes:[],hToday:false,pcSit:null,wEval:null,fsSession:null,fsWords:[],feynmanSession:null,
-swPhase:'idle',swDraft:'',swFeedback:'',swIdeas:[],gradingReport:null,
+swPhase:'idle',swDraft:'',swFeedback:'',swIdeas:[],gradingReport:null,dictationReport:null,reciteReport:null,
 errors:[
 {id:'e1',q:'56-28=?',ca:'38',co:'28',tp:'退位错误',su:'数学',kp:'减法退位',rk:'位值与进位',st:'new',sk:0,cause:'粗心'},
 {id:'e2',q:'100-37=?',ca:'73',co:'63',tp:'退位错误',su:'数学',kp:'减法退位',rk:'位值与进位',st:'new',sk:0,cause:'知识缺漏'},
@@ -339,6 +339,143 @@ function startMockGrading(){
     showStatus('批改报告已生成');
   },600);
 }
+// ===== Dictation flow =====
+function startDictationFlow(id,title,words){
+  // TTS播报词语
+  var modal=document.createElement('div');
+  modal.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:999';
+  modal.innerHTML='<div style="background:#fff;border-radius:16px;padding:20px;max-width:420px;width:95%;max-height:85vh;overflow-y:auto">'
+  +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:16px;font-weight:700">📝 '+title+'</div>'
+  +'<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer">✕</button></div>'
+  +'<div style="font-size:13px;color:var(--g5);margin-bottom:12px">共'+words.length+'个词语，系统将逐词播报</div>'
+  +'<div id="dictProgress" style="margin-bottom:12px"></div>'
+  +'<div style="display:flex;gap:8px">'
+  +'<button id="dictStartBtn" onclick="playDictationWords()" style="flex:1;padding:10px;background:var(--p);color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer">🔊 开始播报</button>'
+  +'<button id="dictUploadBtn" onclick="document.getElementById(\'dictFileInput\').click()" style="flex:1;padding:10px;background:#3B82F6;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;display:none">📷 拍照上传</button></div>'
+  +'<input type="file" id="dictFileInput" accept="image/*" capture="camera" style="display:none" onchange="handleDictationPhoto(this)">'
+  +'</div>';
+  document.body.appendChild(modal);
+  window._dictWords=words;window._dictTitle=title;
+  window.playDictationWords=function(){
+    var idx=0;var prog=document.getElementById('dictProgress');
+    document.getElementById('dictStartBtn').disabled=true;
+    document.getElementById('dictStartBtn').textContent='🔊 播报中...';
+    function speakNext(){
+      if(idx>=words.length){
+        prog.innerHTML='<div style="padding:8px;background:#ECFDF5;border-radius:8px;font-size:13px;color:#065F46">✅ 播报完成！请拍照上传孩子的听写结果</div>';
+        document.getElementById('dictUploadBtn').style.display='block';
+        document.getElementById('dictStartBtn').style.display='none';
+        return;
+      }
+      prog.innerHTML='<div style="font-size:14px;font-weight:600;color:var(--p);text-align:center;padding:12px">第'+(idx+1)+'/'+words.length+'个：<span style="font-size:20px">'+words[idx]+'</span></div>';
+      var u=new SpeechSynthesisUtterance(words[idx]);u.lang='zh-CN';u.rate=0.8;
+      u.onend=function(){idx++;setTimeout(speakNext,1500);};
+      speechSynthesis.speak(u);
+    }
+    speakNext();
+  };
+  window.handleDictationPhoto=function(input){
+    if(!input.files||!input.files[0])return;
+    var reader=new FileReader();
+    reader.onload=function(e){
+      modal.querySelector('div > div').innerHTML='<div style="text-align:center;padding:20px"><div style="font-size:32px;margin-bottom:8px">⏳</div><div style="font-size:14px">AI正在识别并批改...</div></div>';
+      fetch(window.location.origin+'/api/dictation/vision',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({imageBase64:e.target.result,grade:S.grade,title:window._dictTitle,originalWords:window._dictWords})
+      }).then(function(r){return r.json();}).then(function(data){
+        modal.remove();
+        if(data.error){showStatus('听写批改失败: '+data.error,false);startDictationDemo();return;}
+        S.dictationReport={title:window._dictTitle,totalWords:data.totalCount||window._dictWords.length,correctWords:data.correctCount||(window._dictWords.length-(data.errors||[]).length),
+          errors:data.errors||[],accuracy:data.accuracy||0,
+          passed:data.passed||false,duration:480,
+          good:(data.review&&data.review.good)||'听写完成',attention:(data.review&&data.review.attention)||'请查看错词',
+          parentAdviceFromLLM:data.parentAdvice||[],nextReview:'明天（第1次复听）',photoUrl:e.target.result};
+        R();showStatus('听写报告已生成');
+      }).catch(function(){modal.remove();showStatus('网络错误，使用Demo数据',false);startDictationDemo();});
+    };reader.readAsDataURL(input.files[0]);
+  };
+}
+function startDictationDemo(){
+  S.dictationReport={title:'第5课生字词听写',totalWords:10,correctWords:8,
+    errors:[{word:'勇敢',yours:'勇干',errorType:'形近字',tip:'"敢"右边是"攵"不是"干"，注意反文旁'},{word:'温暖',yours:'温暧',errorType:'形近字',tip:'"暖"右边是"爰"不是"暧"，日字旁+爰'}],
+    accuracy:80,passed:true,duration:480,
+    good:'10个词写对8个，基础词汇掌握不错',attention:'"勇敢"和"温暖"都是形近字出错，建议用拆字法',
+    nextReview:'明天（第1次复听）'};
+  R();showStatus('听写报告已生成');
+}
+// ===== Recite flow =====
+function startReciteFlow(id,title,paragraphs){
+  var modal=document.createElement('div');
+  modal.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:999';
+  modal.innerHTML='<div style="background:#fff;border-radius:16px;padding:20px;max-width:420px;width:95%;max-height:85vh;overflow-y:auto">'
+  +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div style="font-size:16px;font-weight:700">📖 '+title+'</div>'
+  +'<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer">✕</button></div>'
+  +'<div style="font-size:12px;color:var(--g5);margin-bottom:8px">先看原文，准备好后点击开始背诵</div>'
+  +paragraphs.map(function(p,i){return '<div style="padding:8px;background:var(--g50);border-radius:6px;margin-bottom:4px;font-size:13px"><span style="color:var(--p);font-weight:600">第'+(i+1)+'段：</span>'+p+'</div>';}).join('')
+  +'<div style="display:flex;gap:8px;margin-top:12px">'
+  +'<button id="recStartBtn" onclick="startRecording()" style="flex:1;padding:10px;background:var(--p);color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer">🎤 开始背诵</button>'
+  +'<button id="recStopBtn" onclick="stopRecording()" style="flex:1;padding:10px;background:#EF4444;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;display:none">⏹ 结束背诵</button></div>'
+  +'<div id="recStatus" style="margin-top:8px;text-align:center;font-size:12px;color:var(--g5)"></div>'
+  +'</div>';
+  document.body.appendChild(modal);
+  window._recTitle=title;window._recParagraphs=paragraphs;window._recModal=modal;
+  window._recStartTime=null;window._mediaRecorder=null;
+  window.startRecording=function(){
+    document.getElementById('recStartBtn').style.display='none';
+    document.getElementById('recStopBtn').style.display='block';
+    document.getElementById('recStatus').innerHTML='<span style="color:#EF4444">● 录音中... 背诵完成后点击"结束背诵"</span>';
+    window._recStartTime=Date.now();
+    // Try to use MediaRecorder for real recording
+    if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
+      navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+        window._mediaRecorder=new MediaRecorder(stream);window._audioChunks=[];
+        window._mediaRecorder.ondataavailable=function(e){window._audioChunks.push(e.data);};
+        window._mediaRecorder.start();
+      }).catch(function(){document.getElementById('recStatus').innerHTML='<span style="color:var(--w)">● 录音中（麦克风未授权，将使用模拟数据）</span>';});
+    }
+  };
+  window.stopRecording=function(){
+    var duration=Math.round((Date.now()-window._recStartTime)/1000);
+    if(window._mediaRecorder&&window._mediaRecorder.state==='recording')window._mediaRecorder.stop();
+    // For demo: use mock ASR text (simulate some errors)
+    var mockASR=paragraphs.map(function(p,i){
+      if(i===1)return p.replace(/^[^，。]+[，。]/,'');// 遗漏第一句
+      if(i===2&&p.includes('村子'))return p.replace('村子','院子');// 替换关键词
+      return p;
+    }).join('');
+    window._recModal.querySelector('div > div').innerHTML='<div style="text-align:center;padding:20px"><div style="font-size:32px;margin-bottom:8px">⏳</div><div style="font-size:14px">AI正在评测背诵...</div></div>';
+    fetch(window.location.origin+'/api/recite/evaluate',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({grade:S.grade,title:window._recTitle,originalParagraphs:window._recParagraphs,asrText:mockASR,fluencyScore:82,durationSeconds:duration})
+    }).then(function(r){return r.json();}).then(function(data){
+      window._recModal.remove();
+      if(data.error){showStatus('背诵评测失败: '+data.error,false);startReciteDemo();return;}
+      S.reciteReport={title:data.summary?data.summary.title:window._recTitle,fluency:data.fluency||82,accuracy:data.accuracy||50,completeness:data.completeness||100,
+        passed:data.passed||false,duration:duration,
+        paragraphs:window._recParagraphs.map(function(p,i){
+          var ep=(data.errorParagraphs||[]).find(function(e){return e.id===i+1;});
+          if(ep)return {id:i+1,status:ep.status,text:p,missed:ep.detail,error:ep.detail,yours:ep.childText||''};
+          return {id:i+1,status:'correct',text:p};
+        }),
+        weakParagraphs:data.summary?data.summary.weakParagraphs:[],
+        comment:'',nextReview:data.summary?data.summary.nextReview:'明天（第1次复背）',
+        reviewSchedule:'按艾宾浩斯 1-3-7 天间隔安排复背',
+        good:(data.review&&data.review.good)||'背诵完成',attention:(data.review&&data.review.attention)||'请查看详情',
+        parentAdviceFromLLM:data.parentAdvice||[],
+        fillBlankTexts:data.fillBlankTexts||[],chainReciteData:data.chainReciteData||[]};
+      R();showStatus('背诵报告已生成');
+    }).catch(function(){window._recModal.remove();showStatus('网络错误，使用Demo数据',false);startReciteDemo();});
+  };
+}
+function startReciteDemo(){
+  S.reciteReport={title:'第7课《桂花雨》',fluency:85,accuracy:75,completeness:80,passed:false,duration:720,
+    paragraphs:[
+      {id:1,status:'correct',text:'桂花盛开的时候，不说香飘十里，至少前后十几家邻居，没有不浸在桂花香里的。'},
+      {id:2,status:'missed',text:'父亲指点花名，我的回答总是"桂花"。',missed:'遗漏了"父亲指点花名"的细节'},
+      {id:3,status:'error',text:'村子里的桂花树不算多。',error:'把"村子"记成了"院子"',yours:'院子里的桂花树不算多。'},
+      {id:4,status:'correct',text:'全年，整个村子都浸在桂花的香气里。'}],
+    weakParagraphs:[2,3],comment:'',nextReview:'明天（第1次复背）',reviewSchedule:'按艾宾浩斯 1-3-7 天间隔安排复背',
+    good:'整体背诵很流畅，第①④段完全正确',attention:'第②段遗漏细节，第③段记错字，试试画面联想法'};
+  R();showStatus('背诵报告已生成');
+}
 function openTransferPractice(origQ,kp,cause){
   // 生成3道举一反三题：同知识点、同错因、升难度
   var qBank={
@@ -377,12 +514,24 @@ function openTransferPractice(origQ,kp,cause){
   document.body.appendChild(modal);
 }
 function rMiniDictation(){
-var d={title:'第5课生字词听写',totalWords:10,correctWords:8,duration:480,
-  errors:[
-    {word:'勇敢',yours:'勇干',errorType:'形近字',tip:'"敢"右边是"攵"不是"干"，注意反文旁'},
-    {word:'温暖',yours:'温暧',errorType:'形近字',tip:'"暖"右边是"爰"不是"暧"，日字旁+爰'}],
-  accuracy:80,writeSpeed:'good',
-  nextReview:'明天（第1次复听）'};
+if(!S.dictationReport){
+var wordSets=[
+  {id:'lesson5',title:'第5课生字词',words:['春天','美丽','勇敢','知识','温暖','坚强','智慧','努力','团结','诚实']},
+  {id:'lesson7',title:'第7课桂花雨',words:['桂花','盛开','香飘','邻居','指点','回答','村子','全年','香气','美丽']},
+];
+return '<div class="cd" style="text-align:center;padding:24px">'
++'<div style="font-size:48px;margin-bottom:12px">📝</div>'
++'<div style="font-size:16px;font-weight:700;margin-bottom:8px">听写助手</div>'
++'<div style="font-size:13px;color:var(--g5);margin-bottom:16px">系统播报词语，孩子手写后拍照上传，AI自动批改</div></div>'
++'<div class="cd"><div class="tt">📋 选择听写内容</div>'
++wordSets.map(function(ws){return '<div style="padding:12px;background:var(--g50);border-radius:8px;margin-bottom:8px;cursor:pointer" onclick="startDictationFlow(\''+ws.id+'\',\''+ws.title+'\','+JSON.stringify(ws.words).replace(/'/g,"\\'")+')"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:14px;font-weight:600">'+ws.title+'</div><div style="font-size:12px;color:var(--g5)">'+ws.words.length+'个词语</div></div><span style="color:var(--p);font-size:14px">开始 →</span></div></div>';}).join('')
++'<div style="padding:12px;background:var(--g50);border-radius:8px;cursor:pointer" onclick="startDictationDemo()"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:14px;font-weight:600">🎯 体验Demo数据</div><div style="font-size:12px;color:var(--g5)">直接查看听写报告效果</div></div><span style="color:#3B82F6;font-size:14px">体验 →</span></div></div></div>'
++'<div class="cd"><div class="tt">📋 听写流程</div><div style="display:flex;gap:8px">'
++'<div style="flex:1;padding:10px;background:var(--g50);border-radius:8px;text-align:center"><div style="font-size:20px">①</div><div style="font-size:12px;font-weight:600">系统播报</div><div style="font-size:11px;color:var(--g5)">TTS逐词播报</div></div>'
++'<div style="flex:1;padding:10px;background:var(--g50);border-radius:8px;text-align:center"><div style="font-size:20px">②</div><div style="font-size:12px;font-weight:600">拍照上传</div><div style="font-size:11px;color:var(--g5)">手写后拍照</div></div>'
++'<div style="flex:1;padding:10px;background:var(--g50);border-radius:8px;text-align:center"><div style="font-size:20px">③</div><div style="font-size:12px;font-weight:600">AI批改</div><div style="font-size:11px;color:var(--g5)">识别+生成报告</div></div></div></div>';
+}
+var d=S.dictationReport;
 var passed=d.accuracy>=80;
 var passColor=passed?'#10B981':'#F59E0B';
 var errCount=d.errors.length;
@@ -418,9 +567,10 @@ return '<div class="cd"><div style="display:flex;justify-content:space-between;a
 }).join('')+'</div></div>'
 
 +'<div class="cd" style="border-left:3px solid var(--p)"><div class="tt" style="color:var(--p)">💊 家长建议</div>'
-+'<div style="padding:8px;font-size:13px;line-height:1.6;color:#374151;border-bottom:1px solid var(--g1)"><span style="color:var(--p);font-weight:600">1.</span> 本次2个错词都是形近字问题（"敢"写成"干"、"暖"写成"暧"），建议用<strong>拆字法</strong>：把字拆成左右两部分，分别说出偏旁名称</div>'
-+'<div style="padding:8px;font-size:13px;line-height:1.6;color:#374151;border-bottom:1px solid var(--g1)"><span style="color:var(--p);font-weight:600">2.</span> 今晚睡前让孩子把错词<strong>各写3遍</strong>，边写边念偏旁（如"勇-敢，反文旁"），比单纯抄写记得更牢</div>'
-+'<div style="padding:8px;font-size:13px;line-height:1.6;color:#374151"><span style="color:var(--p);font-weight:600">3.</span> 点击下方「错词重听」只听写错的词，不用全部重来</div></div>'
++(d.parentAdviceFromLLM&&d.parentAdviceFromLLM.length?d.parentAdviceFromLLM.map(function(t,i){return '<div style="padding:8px;font-size:13px;line-height:1.6;color:#374151;'+(i<d.parentAdviceFromLLM.length-1?'border-bottom:1px solid var(--g1)':'')+'"><span style="color:var(--p);font-weight:600">'+(i+1)+'.</span> '+t+'</div>';}).join('')
+:'<div style="padding:8px;font-size:13px;line-height:1.6;color:#374151;border-bottom:1px solid var(--g1)"><span style="color:var(--p);font-weight:600">1.</span> 本次错词是形近字问题，建议用<strong>拆字法</strong>：把字拆成左右两部分，分别说出偏旁名称</div>'
++'<div style="padding:8px;font-size:13px;line-height:1.6;color:#374151;border-bottom:1px solid var(--g1)"><span style="color:var(--p);font-weight:600">2.</span> 今晚睡前让孩子把错词<strong>各写3遍</strong>，边写边念偏旁</div>'
++'<div style="padding:8px;font-size:13px;line-height:1.6;color:#374151"><span style="color:var(--p);font-weight:600">3.</span> 点击下方「错词重听」只听写错的词</div>')+'</div>'
 
 +'<div class="cd"><div class="tt" style="color:var(--p)">💊 巩固方式</div>'
 +'<div style="padding:10px;background:var(--g50);border-radius:8px;margin-bottom:6px"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:13px;font-weight:600">📝 错词重听</div><div style="font-size:11px;color:var(--g5)">只听写本次写错的'+errCount+'个词</div></div>'
@@ -435,7 +585,8 @@ return '<div class="cd"><div style="display:flex;justify-content:space-between;a
 +'<div>正确/总数：<strong style="color:var(--g6)">'+d.correctWords+'/'+d.totalWords+'</strong></div></div>'
 +'<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--g5);margin-top:4px">'
 +'<div>错误类型：<strong style="color:var(--d)">形近字'+errCount+'个</strong></div>'
-+'<div>下次复听：<strong style="color:var(--p)">'+d.nextReview+'</strong></div></div></div>';
++'<div>下次复听：<strong style="color:var(--p)">'+d.nextReview+'</strong></div></div></div>'
++'<div style="text-align:center;margin-top:12px"><button onclick="S.dictationReport=null;R()" style="padding:8px 20px;background:var(--g4);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer">🔄 重新听写</button></div>';
 }
 function rMiniReading(){
 var d={score:85,fluency:82,accuracy:88,intonation:84,duration:108,
@@ -460,8 +611,25 @@ return '<div style="flex:1;text-align:center;padding:10px;background:var(--g50);
 +'<button onclick="showStatus(\'播放示范朗读\')" style="flex:1;padding:10px;background:#8B5CF6;color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer">🔊 听示范朗读</button></div>';
 }
 function rMiniRecite(){
-var d={title:'第7课《桂花雨》',fluency:85,accuracy:75,completeness:80,
-  passed:false, // accuracy>=80 才通关
+if(!S.reciteReport){
+var texts=[
+  {id:'guihua',title:'第7课《桂花雨》',paragraphs:['桂花盛开的时候，不说香飘十里，至少前后十几家邻居，没有不浸在桂花香里的。','父亲指点花名，我的回答总是"桂花"。','村子里的桂花树不算多。','全年，整个村子都浸在桂花的香气里。']},
+  {id:'spring',title:'春天的公园',paragraphs:['春风轻轻吹过，公园里的一切都醒了过来。','柳树抽出嫩绿的枝条，像姑娘们垂下的长发。桃花、杏花你挨着我、我挨着你，粉粉白白地开满枝头，引来几只小蜜蜂嗡嗡地采蜜。','小河解冻了，河水叮咚叮咚地唱着歌，小鱼在水里快活地游来游去。小朋友们脱下厚厚的棉袄，在草地上放风筝、追蝴蝶，笑声飘得很远很远。','春天的公园，真是又美丽又热闹。']},
+];
+return '<div class="cd" style="text-align:center;padding:24px">'
++'<div style="font-size:48px;margin-bottom:12px">🎤</div>'
++'<div style="font-size:16px;font-weight:700;margin-bottom:8px">背诵助手</div>'
++'<div style="font-size:13px;color:var(--g5);margin-bottom:16px">选择课文，开始背诵录音，AI自动评测生成报告</div></div>'
++'<div class="cd"><div class="tt">📖 选择背诵课文</div>'
++texts.map(function(t){return '<div style="padding:12px;background:var(--g50);border-radius:8px;margin-bottom:8px;cursor:pointer" onclick="startReciteFlow(\''+t.id+'\',\''+t.title.replace(/'/g,"\\'")+'\','+JSON.stringify(t.paragraphs).replace(/'/g,"\\'")+')"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:14px;font-weight:600">'+t.title+'</div><div style="font-size:12px;color:var(--g5)">'+t.paragraphs.length+'段</div></div><span style="color:var(--p);font-size:14px">开始 →</span></div></div>';}).join('')
++'<div style="padding:12px;background:var(--g50);border-radius:8px;cursor:pointer" onclick="startReciteDemo()"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:14px;font-weight:600">🎯 体验Demo数据</div><div style="font-size:12px;color:var(--g5)">直接查看背诵报告效果</div></div><span style="color:#3B82F6;font-size:14px">体验 →</span></div></div></div>'
++'<div class="cd"><div class="tt">📋 背诵流程</div><div style="display:flex;gap:8px">'
++'<div style="flex:1;padding:10px;background:var(--g50);border-radius:8px;text-align:center"><div style="font-size:20px">①</div><div style="font-size:12px;font-weight:600">查看原文</div><div style="font-size:11px;color:var(--g5)">熟悉课文</div></div>'
++'<div style="flex:1;padding:10px;background:var(--g50);border-radius:8px;text-align:center"><div style="font-size:20px">②</div><div style="font-size:12px;font-weight:600">开始背诵</div><div style="font-size:11px;color:var(--g5)">录音背诵</div></div>'
++'<div style="flex:1;padding:10px;background:var(--g50);border-radius:8px;text-align:center"><div style="font-size:20px">③</div><div style="font-size:12px;font-weight:600">AI评测</div><div style="font-size:11px;color:var(--g5)">生成报告</div></div></div></div>';
+}
+var d=S.reciteReport;
+var passed=d.accuracy>=80;
   duration:720, // 约12分钟
   paragraphs:[
     {id:1,status:'correct',text:'桂花盛开的时候，不说香飘十里，至少前后十几家邻居，没有不浸在桂花香里的。'},
@@ -472,7 +640,6 @@ var d={title:'第7课《桂花雨》',fluency:85,accuracy:75,completeness:80,
   comment:'整体背诵很流畅，第①④段完全正确，说明对课文的理解很到位！第②段遗漏了"父亲指点花名"的细节，第③段把"村子"记成了"院子"。试试画面联想法：想象桂花香飘满整个村庄的场景，比反复读更容易记住。',
   nextReview:'明天（第1次复背）',
   reviewSchedule:'按艾宾浩斯 1-3-7 天间隔安排复背，第7天全文检测巩固'};
-var passed=d.accuracy>=80;
 var passColor=passed?'#10B981':'#F59E0B';
 // 三维环形指标
 function ring(val,label,color){
@@ -529,7 +696,8 @@ return '<div class="cd"><div style="display:flex;justify-content:space-between;a
 +'<div>背诵时长：<strong style="color:var(--g6)">约'+Math.round(d.duration/60)+'分钟</strong></div></div>'
 +'<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--g5);margin-top:4px">'
 +'<div>薄弱段落：<strong style="color:var(--d)">第'+d.weakParagraphs.join('、')+'段需复习</strong></div>'
-+'<div>下次复习：<strong style="color:var(--p)">'+d.nextReview+'</strong></div></div></div>';
++'<div>下次复习：<strong style="color:var(--p)">'+d.nextReview+'</strong></div></div></div>'
++'<div style="text-align:center;margin-top:12px"><button onclick="S.reciteReport=null;R()" style="padding:8px 20px;background:var(--g4);color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer">🔄 重新背诵</button></div>';
 }
 
 function openFillBlank(){

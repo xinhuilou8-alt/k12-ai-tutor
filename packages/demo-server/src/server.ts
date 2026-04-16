@@ -666,6 +666,105 @@ app.post('/api/config/llm/test', async (req, res) => {
   }
 });
 
+// Dictation vision: image of handwriting + original words → grading + report
+app.post('/api/dictation/vision', async (req, res) => {
+  try {
+    const { imageBase64, grade, title, originalWords } = req.body;
+    if (!imageBase64 || !originalWords) return res.status(400).json({ error: 'imageBase64 and originalWords required' });
+    console.log(`  📝 Dictation vision: title=${title}, words=${originalWords.length}`);
+
+    const prompt = `# 角色
+你是K12教育产品的AI听写批改+报告引擎。请识别图片中学生手写的听写内容，与标准词语逐一比对，判断每个词是否正确，并生成完整的听写报告。
+
+# 输入数据
+- 孩子年级：${grade || 4}年级
+- 听写任务：${title || '生字词听写'}
+- 标准词语列表：${JSON.stringify(originalWords)}
+- 图片内容：学生手写的听写结果
+
+# 批改规则
+1. 识别图片中学生手写的每个词语
+2. 将识别结果与标准词语逐一比对
+3. 完全一致→正确；不一致→判断是写错还是识别误差
+4. 错字分类：形近字（字形相似）/同音字（读音相同）/笔画错误/多字少字
+
+# 输出要求
+请严格按以下JSON格式输出，不要输出任何其他内容：
+{
+  "accuracy": 数字(正确数/总数×100取整),
+  "correctCount": 数字,
+  "totalCount": 数字,
+  "passed": true/false(accuracy>=80为true),
+  "review": {"good": "鼓励15-30字含具体正确数量", "attention": "提醒15-30字含错误规律和方法"},
+  "errors": [{"word":"标准词","yours":"孩子写的","errorType":"形近字/同音字/笔画错误/多字少字","tip":"记忆提示15-25字含偏旁名称"}],
+  "parentAdvice": ["建议1含具体方法", "建议2今晚能做的", "建议3引导错词重听"],
+  "nextReviewDays": [1,3,7]
+}`;
+
+    const messages = [{ role: 'user' as const, content: [
+      { type: 'text' as const, text: prompt },
+      { type: 'image_url' as const, image_url: { url: imageBase64.startsWith('data:') ? imageBase64 : `data:image/jpeg;base64,${imageBase64}` } }
+    ]}];
+    const result = await llmProvider.chat(messages);
+    const jsonMatch = result.content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) res.json(JSON.parse(jsonMatch[0]));
+    else res.json({ error: 'Failed to parse', raw: result.content });
+  } catch (e: any) {
+    console.error('  ❌ Dictation vision error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Recite: ASR text + original paragraphs → grading + report
+app.post('/api/recite/evaluate', async (req, res) => {
+  try {
+    const { grade, title, originalParagraphs, asrText, fluencyScore } = req.body;
+    if (!originalParagraphs || !asrText) return res.status(400).json({ error: 'originalParagraphs and asrText required' });
+    console.log(`  🎤 Recite evaluate: title=${title}, paragraphs=${originalParagraphs.length}`);
+
+    const prompt = `# 角色
+你是K12教育产品的AI背诵批改+报告引擎。请将孩子背诵的语音识别文本与课文原文逐段比对，判断每段背诵情况，并生成完整的背诵报告。
+
+# 输入数据
+- 孩子年级：${grade || 4}年级
+- 背诵课文：${title || '课文背诵'}
+- 流畅度评分：${fluencyScore || 80}
+- 课文原文（按段落拆分）：${JSON.stringify(originalParagraphs)}
+- ASR语音识别结果：${asrText}
+
+# 批改规则
+1. 将ASR文本与原文逐段对齐（按语义和关键词匹配）
+2. 每段判定：correct（完整准确）/missed（有遗漏）/error（有错误）
+3. ASR容错：标点差异不算错，语气词增减不算错，同音字语义不变不算错，关键名词动词替换算错
+4. accuracy=正确段数/总段数×100取整，passed=accuracy>=80
+
+# 输出要求
+请严格按以下JSON格式输出：
+{
+  "fluency": ${fluencyScore || 80},
+  "accuracy": 数字,
+  "completeness": 数字,
+  "passed": true/false,
+  "review": {"good": "鼓励15-35字含正确段落编号", "attention": "提醒15-35字含错误段落和记忆方法"},
+  "errorParagraphs": [{"id":数字,"status":"missed/error","label":"有遗漏/有错误","originalText":"原文","childText":"孩子背的(missed为空)","detail":"具体问题"}],
+  "fillBlankTexts": [{"paragraphId":数字,"text":"挖空文本用____替换错误部分"}],
+  "chainReciteData": [{"id":数字,"text":"原文","isWeak":true/false}],
+  "parentAdvice": ["建议1针对薄弱段落", "建议2解释记错原因", "建议3引导巩固工具"],
+  "nextReviewDays": [1,3,7],
+  "summary": {"title":"课文名","weakParagraphs":[数字],"nextReview":"明天（第1次复背）"}
+}`;
+
+    const messages = [{ role: 'user' as const, content: prompt }];
+    const result = await llmProvider.chat(messages);
+    const jsonMatch = result.content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) res.json(JSON.parse(jsonMatch[0]));
+    else res.json({ error: 'Failed to parse', raw: result.content });
+  } catch (e: any) {
+    console.error('  ❌ Recite evaluate error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.get('/api/report/daily/:childId/:date', (req, res) => {
   res.json(reportGen.generateDailySnapshot(req.params.childId, req.params.date));
 });
