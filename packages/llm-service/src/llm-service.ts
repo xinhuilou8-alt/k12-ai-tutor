@@ -238,7 +238,8 @@ function buildMetacognitivePrompt(ctx: LearningContext, background?: ChildLearni
 export class MockLLMProvider implements LLMProvider {
   async chat(messages: LLMProviderMessage[]): Promise<LLMProviderResponse> {
     const lastMessage = messages[messages.length - 1];
-    const systemMessage = messages.find(m => m.role === 'system')?.content ?? '';
+    const rawContent = messages.find(m => m.role === 'system')?.content ?? '';
+    const systemMessage = typeof rawContent === 'string' ? rawContent : rawContent.map(c => c.type === 'text' ? c.text : '').join('');
 
     // Detect prompt type from system message and return appropriate mock response
     if (systemMessage.includes('语义评分专家')) {
