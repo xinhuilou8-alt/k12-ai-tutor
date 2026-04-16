@@ -650,7 +650,19 @@ app.post('/api/grading/vision', async (req, res) => {
     }
   } catch (e: any) {
     console.error('  ❌ Vision grading error:', e.message);
-    res.status(500).json({ error: e.message });
+    res.status(500).json({ error: e.message, hint: '可能原因：1)模型不支持图片输入(需要vision模型如doubao-vision-pro-32k) 2)API Key无权限 3)图片太大' });
+  }
+});
+
+// Test LLM connection (text only, no image)
+app.post('/api/config/llm/test', async (req, res) => {
+  try {
+    const result = await llmProvider.chat([
+      { role: 'user', content: '请回复"连接成功"四个字' }
+    ]);
+    res.json({ ok: true, response: result.content.slice(0, 100) });
+  } catch (e: any) {
+    res.json({ ok: false, error: e.message });
   }
 });
 

@@ -282,7 +282,7 @@ function handleGradingPhoto(input){
       body:JSON.stringify({imageBase64:imageBase64,grade:S.grade,subject:'math'})
     }).then(function(r){return r.json();}).then(function(data){
       if(data.error){
-        showStatus('批改失败: '+data.error,false);
+        showStatus('批改失败: '+data.error+(data.hint?' ('+data.hint+')':''),false);
         // Fallback to mock data
         S.gradingReport={score:85,correct:17,total:20,
           errors:[{q:'(识别失败)',yours:'—',right:'—',cause:'粗心',kp:'—',analysis:'图片识别失败，请重试'}],
@@ -1401,7 +1401,8 @@ function openAISettings(){
   +'<div style="margin-bottom:16px"><label style="font-size:12px;font-weight:600;color:var(--g6)">模型名称</label>'
   +'<input type="text" id="aiModel" placeholder="如 gpt-4o / doubao-seed-2-0-pro" style="width:100%;padding:8px;border:1px solid var(--g2);border-radius:6px;font-size:13px;margin-top:4px;box-sizing:border-box"></div>'
   +'<div id="aiSettingsStatus" style="font-size:12px;color:var(--g5);margin-bottom:10px"></div>'
-  +'<button onclick="saveAISettings()" style="width:100%;padding:10px;background:var(--p);color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer">💾 保存并测试连接</button></div>';
+  +'<button onclick="saveAISettings()" style="width:100%;padding:10px;background:var(--p);color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;margin-bottom:8px">💾 保存并测试连接</button>'
+  +'<button onclick="testLLMConnection()" style="width:100%;padding:8px;background:#3B82F6;color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer">🔍 测试文本对话（不含图片）</button></div>';
   document.body.appendChild(modal);
   // Load current config
   fetch(window.location.origin+'/api/config/llm').then(function(r){return r.json();}).then(function(d){
@@ -1422,6 +1423,14 @@ function saveAISettings(){
     if(d.ok){document.getElementById('aiSettingsStatus').innerHTML='<span style="color:#10B981">✅ 保存成功！模型: '+d.model+'</span>';showStatus('AI模型配置已更新');}
     else{document.getElementById('aiSettingsStatus').innerHTML='<span style="color:var(--d)">❌ '+d.error+'</span>';}
   }).catch(function(e){document.getElementById('aiSettingsStatus').innerHTML='<span style="color:var(--d)">❌ 网络错误</span>';});
+}
+function testLLMConnection(){
+  document.getElementById('aiSettingsStatus').innerHTML='<span style="color:var(--p)">正在测试文本对话...</span>';
+  fetch(window.location.origin+'/api/config/llm/test',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})
+  .then(function(r){return r.json();}).then(function(d){
+    if(d.ok){document.getElementById('aiSettingsStatus').innerHTML='<span style="color:#10B981">✅ 文本对话成功: '+d.response+'</span>';}
+    else{document.getElementById('aiSettingsStatus').innerHTML='<span style="color:var(--d)">❌ 文本对话失败: '+d.error+'</span>';}
+  }).catch(function(e){document.getElementById('aiSettingsStatus').innerHTML='<span style="color:var(--d)">❌ 网络错误: '+e.message+'</span>';});
 }
 
 function openErrorList(){
