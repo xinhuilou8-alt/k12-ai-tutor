@@ -62,7 +62,7 @@ import { ReportGenerator } from '../../parent-report/src/report-generator';
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.resolve(__dirname, '../../..')));
 
 // ── Singletons ──
@@ -562,6 +562,63 @@ app.get('/api/feynman/state/:sessionId', (req, res) => {
 app.post('/api/report/event', (req, res) => {
   try { reportGen.recordEvent(req.body); res.json({ ok: true }); }
   catch (e: any) { res.status(400).json({ error: e.message }); }
+});
+
+// Vision grading: image + LLM = grading report
+app.post('/api/grading/vision', async (req, res) => {
+  try {
+    const { imageBase64, grade, subject } = req.body;
+    if (!imageBase64) return res.status(400).json({ error: 'imageBase64 is required' });
+
+    const prompt = `# 角色
+你是K12教育产品的AI批改+报告引擎。请识别图片中学生的作业内容，判断每道题的对错，并生成完整的批改报告。
+
+# 输入信息
+- 孩子年级：${grade || 4}年级
+- 学科：${subject || 'math'}
+- 图片内容：学生手写的作业答题结果
+
+# 任务
+1. 识别图片中的每道题目和学生的答案
+2. 判断每道题是否正确
+3. 对错题进行错因分类和解析
+4. 生成完整报告
+
+# 输出要求
+请严格按以下 JSON 格式输出，不要输出任何其他内容：
+{
+  "score": 数字(正确数/总数×100取整),
+  "review": {"good": "做得好15-30字含具体答对数量", "attention": "需注意15-30字含具体知识点"},
+  "errorCauseAnalysis": {"粗心": 数字, "知识缺漏": 数字, "审题不清": 数字},
+  "parentAdvice": ["建议1含具体知识点和方法", "建议2", "建议3"],
+  "errorDetails": [{"question":"题目","childAnswer":"孩子答案","correctAnswer":"正确答案","cause":"粗心/知识缺漏/审题不清","knowledgePoint":"知识点","analysis":"解析30-60字"}],
+  "transferQuestions": [{"originalQuestion":"原题","sameKP":{"question":"同知识点题","answer":"答案"},"sameCause":{"question":"同错因题","answer":"答案"},"harder":{"question":"升难度题","answer":"答案"}}]
+}
+
+# 规则
+- 错因分类：退位/计算/笔误→粗心，概念/公式/不会→知识缺漏，审题/漏看→审题不清
+- parentAdvice面向家长，务实落地，最多3条
+- analysis先写正确步骤再指出错在哪
+- transferQuestions每道错题3道新题不重复`;
+
+    const messages = [
+      { role: 'user' as const, content: [
+        { type: 'text' as const, text: prompt },
+        { type: 'image_url' as const, image_url: { url: imageBase64.startsWith('data:') ? imageBase64 : `data:image/jpeg;base64,${imageBase64}` } }
+      ]}
+    ];
+
+    const result = await llmProvider.chat(messages);
+    // Parse JSON from response
+    const jsonMatch = result.content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      res.json(JSON.parse(jsonMatch[0]));
+    } else {
+      res.json({ error: 'Failed to parse report', raw: result.content });
+    }
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.get('/api/report/daily/:childId/:date', (req, res) => {

@@ -223,9 +223,12 @@ var d=S.gradingReport;
 var sc=d.score>=90?'#10B981':d.score>=70?'#F59E0B':'#EF4444';
 var totalErr=d.errors.length;
 var tips=[];
+if(d.parentAdviceFromLLM&&d.parentAdviceFromLLM.length){tips=d.parentAdviceFromLLM;}
+else{
 if(d.causeDist['粗心'])tips.push('有'+d.causeDist['粗心']+'道题因为粗心做错（「减法退位」），建议孩子做完后用手遮住答案自己验算一遍');
 if(d.causeDist['知识缺漏'])tips.push('「运算顺序」属于知识没掌握，建议点击错题的「AI讲题」看一遍讲解，搞懂"先乘除后加减"');
 if(d.causeDist['审题不清'])tips.push('应用题审题不够仔细，建议让孩子读题时用笔圈出关键数字和"几倍"等关键词');
+}
 
 return (d.photoUrl?'<div class="cd"><div class="tt">📷 作业照片</div><img src="'+d.photoUrl+'" style="width:100%;border-radius:8px;max-height:200px;object-fit:cover"></div>':'')
 +'<div class="cd" style="padding:20px">'
@@ -267,28 +270,49 @@ return (d.photoUrl?'<div class="cd"><div class="tt">📷 作业照片</div><img 
 function handleGradingPhoto(input){
   if(!input.files||!input.files[0])return;
   var file=input.files[0];
-  showStatus('正在识别图片...');
-  // 显示上传的图片预览
+  showStatus('正在上传图片...');
   var reader=new FileReader();
   reader.onload=function(e){
-    // 模拟OCR识别+LLM批改（Demo阶段用mock数据，实际接入OCR+LLM）
-    setTimeout(function(){
-      showStatus('AI批改完成，生成报告中...');
-      setTimeout(function(){
-        S.gradingReport={score:78,correct:14,total:18,
-          errors:[
-            {q:'45-19=?',yours:'36',right:'26',cause:'粗心',kp:'减法退位',analysis:'个位5-9不够减需退位，十位4变3，个位15-9=6，十位3-1=2，答案26'},
-            {q:'7×8=?',yours:'54',right:'56',cause:'粗心',kp:'乘法口诀',analysis:'七八五十六，不是五十四，注意背熟乘法口诀'},
-            {q:'24÷6+3×2=?',yours:'10',right:'10',cause:'粗心',kp:'运算顺序',analysis:'先算24÷6=4和3×2=6，再算4+6=10，这道其实答对了'},
-            {q:'一个长方形长8cm宽5cm，周长是多少？',yours:'13cm',right:'26cm',cause:'知识缺漏',kp:'周长公式',analysis:'周长=(长+宽)×2=(8+5)×2=26cm，不是8+5=13'}],
-          causeDist:{粗心:3,知识缺漏:1,审题不清:0},
-          good:'14道题答对，乘法口诀和基础加法掌握不错',
-          attention:'退位减法和周长公式需要巩固，注意验算习惯',
-          photoUrl:e.target.result};
-        R();
-        showStatus('批改报告已生成');
-      },800);
-    },1200);
+    var imageBase64=e.target.result;
+    showStatus('AI正在识别并批改...');
+    // 调用后端 vision grading API
+    fetch(window.location.origin+'/api/grading/vision',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({imageBase64:imageBase64,grade:S.grade,subject:'math'})
+    }).then(function(r){return r.json();}).then(function(data){
+      if(data.error){
+        showStatus('批改失败: '+data.error,false);
+        // Fallback to mock data
+        S.gradingReport={score:85,correct:17,total:20,
+          errors:[{q:'(识别失败)',yours:'—',right:'—',cause:'粗心',kp:'—',analysis:'图片识别失败，请重试'}],
+          causeDist:{粗心:1,知识缺漏:0,审题不清:0},
+          good:'图片识别失败，请重新上传清晰的作业照片',attention:'请确保照片清晰、光线充足',photoUrl:imageBase64};
+        R();return;
+      }
+      // Map LLM response to report format
+      var totalErr=(data.errorDetails||[]).length;
+      var correct=(data.score?Math.round(data.score/100*(totalErr+ (data.errorDetails?data.errorDetails.length:0) )):0);
+      // Estimate correct count from score
+      var total=totalErr>0?Math.round(totalErr/(1-data.score/100)):20;
+      if(data.score>=100)total=totalErr>0?totalErr+10:20;
+      correct=total-totalErr;
+      S.gradingReport={
+        score:data.score||0,
+        correct:correct,
+        total:total,
+        errors:(data.errorDetails||[]).map(function(e){return {q:e.question,yours:e.childAnswer,right:e.correctAnswer,cause:e.cause,kp:e.knowledgePoint,analysis:e.analysis};}),
+        causeDist:data.errorCauseAnalysis||{粗心:0,知识缺漏:0,审题不清:0},
+        good:(data.review&&data.review.good)||'批改完成',
+        attention:(data.review&&data.review.attention)||'请查看错题详情',
+        transferData:data.transferQuestions||[],
+        parentAdviceFromLLM:data.parentAdvice||[],
+        photoUrl:imageBase64};
+      R();
+      showStatus('批改报告已生成');
+    }).catch(function(err){
+      showStatus('网络错误: '+err.message,false);
+    });
   };
   reader.readAsDataURL(file);
 }

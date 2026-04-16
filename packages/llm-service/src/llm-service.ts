@@ -20,7 +20,7 @@ import {
 
 export interface LLMProviderMessage {
   role: 'system' | 'assistant' | 'user';
-  content: string;
+  content: string | Array<{type: 'text', text: string} | {type: 'image_url', image_url: {url: string}}>;
 }
 
 export interface LLMProviderResponse {
