@@ -74,7 +74,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="hd">
     <h1>🎓 K12家庭作业AI辅导</h1>
     <p>孩子做 · AI盯 · 产品催 · 家长看</p>
-    <div class="ui"><span id="gd">👧 小明 · 4年级</span><span>📅 今日 35分钟</span><span id="sd">🔥 连续7天</span></div>
+    <div class="ui"><span id="gd">👧 小明 · 4年级</span><span>📅 今日 35分钟</span><span id="sd">🔥 连续7天</span><span style="cursor:pointer" onclick="openAISettings()">⚙️ AI设置</span></div>
   </div>
   <div class="tabs" id="tabs">
     <div class="tab active" data-t="home">🏠首页</div>
@@ -1386,6 +1386,43 @@ try{
   </div></div>`).join('')}</div>`;
   showStatus('周报告已生成');
 }catch(e){document.getElementById('mvpWeeklyResult').innerHTML='<div class="nt nw">后端未连接</div>';}}
+
+function openAISettings(){
+  var modal=document.createElement('div');
+  modal.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:999';
+  modal.innerHTML='<div style="background:#fff;border-radius:16px;padding:20px;max-width:420px;width:95%">'
+  +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-size:16px;font-weight:700">⚙️ AI模型设置</div>'
+  +'<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer">✕</button></div>'
+  +'<div style="font-size:12px;color:var(--g5);margin-bottom:12px">配置大模型API，支持OpenAI兼容接口（如doubao、通义千问、GPT等）</div>'
+  +'<div style="margin-bottom:10px"><label style="font-size:12px;font-weight:600;color:var(--g6)">API Base URL</label>'
+  +'<input type="text" id="aiBaseUrl" placeholder="如 https://api.openai.com/v1" style="width:100%;padding:8px;border:1px solid var(--g2);border-radius:6px;font-size:13px;margin-top:4px;box-sizing:border-box"></div>'
+  +'<div style="margin-bottom:10px"><label style="font-size:12px;font-weight:600;color:var(--g6)">API Key</label>'
+  +'<input type="password" id="aiApiKey" placeholder="sk-xxxx" style="width:100%;padding:8px;border:1px solid var(--g2);border-radius:6px;font-size:13px;margin-top:4px;box-sizing:border-box"></div>'
+  +'<div style="margin-bottom:16px"><label style="font-size:12px;font-weight:600;color:var(--g6)">模型名称</label>'
+  +'<input type="text" id="aiModel" placeholder="如 gpt-4o / doubao-seed-2-0-pro" style="width:100%;padding:8px;border:1px solid var(--g2);border-radius:6px;font-size:13px;margin-top:4px;box-sizing:border-box"></div>'
+  +'<div id="aiSettingsStatus" style="font-size:12px;color:var(--g5);margin-bottom:10px"></div>'
+  +'<button onclick="saveAISettings()" style="width:100%;padding:10px;background:var(--p);color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer">💾 保存并测试连接</button></div>';
+  document.body.appendChild(modal);
+  // Load current config
+  fetch(window.location.origin+'/api/config/llm').then(function(r){return r.json();}).then(function(d){
+    if(d.baseUrl)document.getElementById('aiBaseUrl').value=d.baseUrl;
+    if(d.apiKey)document.getElementById('aiApiKey').placeholder='当前: '+d.apiKey;
+    if(d.model)document.getElementById('aiModel').value=d.model;
+    document.getElementById('aiSettingsStatus').innerHTML='当前状态: <strong style="color:'+(d.provider!=='mock'?'#10B981':'#F59E0B')+'">'+(d.provider!=='mock'?'✅ 已配置':'⚠️ Mock模式')+'</strong>';
+  }).catch(function(){});
+}
+function saveAISettings(){
+  var baseUrl=document.getElementById('aiBaseUrl').value.trim();
+  var apiKey=document.getElementById('aiApiKey').value.trim();
+  var model=document.getElementById('aiModel').value.trim();
+  if(!baseUrl||!apiKey||!model){document.getElementById('aiSettingsStatus').innerHTML='<span style="color:var(--d)">请填写所有字段</span>';return;}
+  document.getElementById('aiSettingsStatus').innerHTML='<span style="color:var(--p)">正在保存并测试...</span>';
+  fetch(window.location.origin+'/api/config/llm',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({apiKey:apiKey,baseUrl:baseUrl,model:model})})
+  .then(function(r){return r.json();}).then(function(d){
+    if(d.ok){document.getElementById('aiSettingsStatus').innerHTML='<span style="color:#10B981">✅ 保存成功！模型: '+d.model+'</span>';showStatus('AI模型配置已更新');}
+    else{document.getElementById('aiSettingsStatus').innerHTML='<span style="color:var(--d)">❌ '+d.error+'</span>';}
+  }).catch(function(e){document.getElementById('aiSettingsStatus').innerHTML='<span style="color:var(--d)">❌ 网络错误</span>';});
+}
 
 function openErrorList(){
   var d=window._errorListData;

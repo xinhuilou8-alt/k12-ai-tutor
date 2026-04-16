@@ -12,8 +12,10 @@ const aiConfig = loadAIConfig();
 // ── LLM Provider ──
 import { createLLMProvider } from '../../llm-service/src/providers';
 import { LLMServiceImpl } from '../../llm-service/src/llm-service';
-const llmProvider = createLLMProvider(aiConfig.llm);
-const llmService = new LLMServiceImpl(llmProvider);
+let llmProvider = createLLMProvider(aiConfig.llm);
+let llmService = new LLMServiceImpl(llmProvider);
+// Runtime LLM config (can be updated via API)
+let runtimeLLMConfig = { ...aiConfig.llm };
 
 // ── Direct source imports (no build step needed) ──
 import { HomeworkClassificationService, CheckInStore } from '../../homework-classification/src';
@@ -270,6 +272,35 @@ app.get('/api/config/status', (_req, res) => {
     asr: { provider: aiConfig.asr.provider, active: aiConfig.asr.provider !== 'mock' },
     tts: { provider: aiConfig.tts.provider, active: aiConfig.tts.provider !== 'mock' },
   });
+});
+
+// Runtime LLM config API
+app.get('/api/config/llm', (_req, res) => {
+  const cfg = runtimeLLMConfig as any;
+  res.json({
+    provider: cfg.provider || 'mock',
+    apiKey: cfg.openai?.apiKey ? cfg.openai.apiKey.slice(0, 8) + '****' : '',
+    baseUrl: cfg.openai?.baseUrl || '',
+    model: cfg.openai?.model || '',
+  });
+});
+
+app.post('/api/config/llm', (req, res) => {
+  try {
+    const { apiKey, baseUrl, model } = req.body;
+    if (!apiKey || !baseUrl || !model) return res.status(400).json({ error: 'apiKey, baseUrl, model are required' });
+    runtimeLLMConfig = {
+      provider: 'openai' as any,
+      fallbackOrder: ['openai', 'mock'] as any,
+      openai: { apiKey, baseUrl, model },
+    } as any;
+    llmProvider = createLLMProvider(runtimeLLMConfig);
+    llmService = new LLMServiceImpl(llmProvider);
+    console.log(`  🔧 LLM config updated: ${baseUrl} / ${model}`);
+    res.json({ ok: true, provider: 'openai', model });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // ════════════════════════════════════════
