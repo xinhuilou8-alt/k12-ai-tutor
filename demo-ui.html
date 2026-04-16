@@ -240,7 +240,7 @@ return '<div class="cd" style="padding:20px">'
 
 +'<div class="cd"><div style="padding:8px;background:#EFF6FF;border-radius:8px;font-size:12px;color:#1E40AF;margin-bottom:10px">💡 针对每道错题，通过AI讲题解决，或举一反三练习</div>'
 +'<div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="var el=document.getElementById(\'errDetailList\');var show=el.style.display===\'none\';el.style.display=show?\'block\':\'none\';this.querySelector(\'.arrow\').textContent=show?\'▾\':\'▸\'">'
-+'<div class="tt" style="margin-bottom:0;color:var(--d)">📋 错题明细（'+totalErr+'道）</div><span class="arrow" style="font-size:14px;color:var(--g5)">▾</span></div>'
++'<div class="tt" style="margin-bottom:0;color:var(--d)">📋 错题巩固（'+totalErr+'道）</div><span class="arrow" style="font-size:14px;color:var(--g5)">▾</span></div>'
 +'<div id="errDetailList" style="display:block;margin-top:8px">'
 +d.errors.map(function(e,i){return '<div style="padding:12px;background:'+(i%2===0?'var(--g50)':'#fff')+';border-radius:8px;margin-bottom:8px">'
 +'<div style="font-size:14px;font-weight:600;margin-bottom:6px">'+e.q+'</div>'
